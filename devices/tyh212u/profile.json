@@ -116,5 +116,13 @@
     "updates_supported": false
   },
   "status_interpretation": "target_kernel_built means a complete board-targeted kernel, not a successful minimal experimental platform compile. Per-run compile results are recorded in BUILD-RESULT.json artifacts.",
-  "ci_scope": "Offline tooling, AArch64 diagnostic archive, source coverage and experimental ARM64 platform Image plus all selected linked modules. No board DTB, boot image, OpenWrt firmware, phone connection, flashing, signing or hardware validation. USB PHY, charge/role policy and GPU clocks are not adapted."
+  "owner_reported_boot_evidence": {
+    "date": "2026-11-14",
+    "source": "Owner statement; not independently hardware-validated",
+    "previously_flashed_modified_boot": true,
+    "reports_knowing_recovery_method": true,
+    "experimental_kernel_booted": false,
+    "recovery_procedure_and_result_validated": false
+  },
+  "ci_scope": "Offline tooling, AArch64 diagnostic archive, source coverage and experimental ARM64 platform Image plus all selected linked modules, including isolated USB PHY, generic DWC3 compatible glue and gadget NCM/ACM compilation. No board DTB, boot image, OpenWrt firmware, phone connection, flashing, signing or hardware validation. Stock DT enables both IPA DWC3 and AON MUSB; active controller and mux are unconfirmed. PMIC EIC binding, USB charge/role/DPDM policy and GPU clocks are not adapted."
 }

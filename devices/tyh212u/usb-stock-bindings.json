@@ -1,0 +1,1015 @@
+{
+  "schema": 1,
+  "profile": "tyh212u",
+  "evidence": {
+    "kind": "sanitized_selected_stock_live_dt_bindings",
+    "interpretation": "Enabled DT nodes and references only; not proof of live driver registration, physical role changes, USB enumeration, charger ownership or replacement-kernel support. Original DT and identifiers stay on owner computer.",
+    "private_data_included": false
+  },
+  "controller": {
+    "path": "/soc/ipa-apb/usb3@25100000",
+    "compatible": [
+      "sprd,qogirn6pro-dwc3"
+    ],
+    "status_property": "okay",
+    "enabled_with_ancestors": true,
+    "phandle": 344,
+    "register_region": {
+      "address": "0x25100000",
+      "bytes": "0x100000"
+    },
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/extcon-gpio",
+          "compatible": [
+            "linux,extcon-usb-gpio"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 522
+        }
+      },
+      {
+        "index": 1,
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/typec@380",
+          "compatible": [
+            "sprd,ump96xx-typec",
+            "sprd,sc27xx-typec"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 109
+        }
+      }
+    ],
+    "legacy_usb_phy_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/soc/ipa-apb/ssphy@25310000",
+          "compatible": [
+            "sprd,qogirn6pro-ssphy"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 90
+        }
+      },
+      {
+        "index": 1,
+        "provider": {
+          "path": "/soc/ipa-apb/ssphy@25310000",
+          "compatible": [
+            "sprd,qogirn6pro-ssphy"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 90
+        }
+      }
+    ],
+    "power_domain": {
+      "path": "/soc/aon/sipa-sys",
+      "compatible": [
+        "sprd,qogirn6pro-ipa-sys-power-domain"
+      ],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 78
+    },
+    "power_domain_specifier_cells": 0,
+    "clocks": [
+      {
+        "name": "core_clk",
+        "provider": {
+          "path": "/soc/ipaapb-gate",
+          "compatible": [
+            "sprd,ums9620-ipaapb-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 88
+        },
+        "specifier_cells": 1,
+        "args": [
+          0
+        ]
+      },
+      {
+        "name": "ref_clk",
+        "provider": {
+          "path": "/soc/ipaapb-gate",
+          "compatible": [
+            "sprd,ums9620-ipaapb-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 88
+        },
+        "specifier_cells": 1,
+        "args": [
+          2
+        ]
+      },
+      {
+        "name": "susp_clk",
+        "provider": {
+          "path": "/soc/ipaapb-gate",
+          "compatible": [
+            "sprd,ums9620-ipaapb-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 88
+        },
+        "specifier_cells": 1,
+        "args": [
+          1
+        ]
+      },
+      {
+        "name": "ipa_usb_ref",
+        "provider": {
+          "path": "/soc/clock-controller@25010000",
+          "compatible": [
+            "sprd,ums9620-ipa-clk"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 81
+        },
+        "specifier_cells": 1,
+        "args": [
+          2
+        ]
+      },
+      {
+        "name": "ipa_usb_ref_source",
+        "provider": {
+          "path": "/soc/g5l-pll",
+          "compatible": [
+            "sprd,ums9620-g5l-pll"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 12
+        },
+        "specifier_cells": 1,
+        "args": [
+          2
+        ]
+      },
+      {
+        "name": "ipa_dpu1_clk",
+        "provider": {
+          "path": "/soc/clock-controller@31800000",
+          "compatible": [
+            "sprd,ums9620-ipadispc-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 82
+        },
+        "specifier_cells": 1,
+        "args": [
+          0
+        ]
+      },
+      {
+        "name": "ipa_dptx_clk",
+        "provider": {
+          "path": "/soc/clock-controller@31800000",
+          "compatible": [
+            "sprd,ums9620-ipadispc-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 82
+        },
+        "specifier_cells": 1,
+        "args": [
+          1
+        ]
+      },
+      {
+        "name": "ipa_tca_clk",
+        "provider": {
+          "path": "/soc/clock-controller@31800000",
+          "compatible": [
+            "sprd,ums9620-ipadispc-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 82
+        },
+        "specifier_cells": 1,
+        "args": [
+          3
+        ]
+      },
+      {
+        "name": "ipa_usb31pll_clk",
+        "provider": {
+          "path": "/soc/clock-controller@31800000",
+          "compatible": [
+            "sprd,ums9620-ipadispc-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 82
+        },
+        "specifier_cells": 1,
+        "args": [
+          4
+        ]
+      },
+      {
+        "name": "ipa_usb_ref_default",
+        "provider": {
+          "path": "/ext_32k",
+          "compatible": [
+            "fixed-clock"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 89
+        },
+        "specifier_cells": 0,
+        "args": []
+      }
+    ],
+    "vbus_supply": {
+      "path": "/charger-manager/cm_otg_vbus",
+      "compatible": [],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 563,
+      "regulator_name": "vddvbus",
+      "parent": {
+        "path": "/charger-manager",
+        "compatible": [
+          "charger-manager"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true
+      },
+      "register_or_enable_gpio_described": false
+    }
+  },
+  "dwc3_core": {
+    "path": "/soc/ipa-apb/usb3@25100000/dwc3@25100000",
+    "compatible": [
+      "snps,dwc3"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "register_region": {
+      "address": "0x25100000",
+      "bytes": "0x100000"
+    },
+    "interrupt_cells": [
+      0,
+      142,
+      4
+    ],
+    "interrupt_names": [
+      "irq"
+    ],
+    "phy_type": "utmi",
+    "legacy_usb_phy_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/soc/ipa-apb/ssphy@25310000",
+          "compatible": [
+            "sprd,qogirn6pro-ssphy"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 90
+        }
+      },
+      {
+        "index": 1,
+        "provider": {
+          "path": "/soc/ipa-apb/ssphy@25310000",
+          "compatible": [
+            "sprd,qogirn6pro-ssphy"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 90
+        }
+      }
+    ],
+    "boolean_quirks": [
+      "snps,usb3-u1u2-disable",
+      "snps,dis_u3_susphy_quirk",
+      "snps,dis_u2_susphy_quirk",
+      "snps,overlap_check_quirk",
+      "snps,ep_out_aligned_size_quirk",
+      "snps,disconnect_event_quirk",
+      "snps,usb3_slow_suspend",
+      "snps,host_suspend_capable"
+    ],
+    "clock_properties_present": []
+  },
+  "phy": {
+    "path": "/soc/ipa-apb/ssphy@25310000",
+    "compatible": [
+      "sprd,qogirn6pro-ssphy"
+    ],
+    "status_property": "okay",
+    "enabled_with_ancestors": true,
+    "phandle": 90,
+    "register_region": {
+      "address": "0x25310000",
+      "bytes": "0x10000"
+    },
+    "register_names": [
+      "phy_glb_regs"
+    ],
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/extcon-gpio",
+          "compatible": [
+            "linux,extcon-usb-gpio"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 522
+        }
+      }
+    ],
+    "vdd_supply": {
+      "path": "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDUSB33",
+      "compatible": [],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 382,
+      "regulator_name": "vddusb33",
+      "min_microvolt": 1200000,
+      "max_microvolt": 3750000,
+      "ramp_delay_microvolt_per_us": 25000,
+      "regulator_parent": {
+        "path": "/soc/aon/spi@400000/pmic@0/power-controller@2000",
+        "compatible": [
+          "sprd,ump962x-regulator",
+          "sprd,sc27xx-regulator"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true
+      }
+    },
+    "requested_microvolt": 3300000,
+    "hsphy_host_eye_pattern": "0x67bd1c0",
+    "hsphy_device_eye_pattern": "0x67bd1c0",
+    "ssphy_ctl5_eye_pattern_present": false,
+    "ssphy_ctl6_eye_pattern_present": false,
+    "syscons": {
+      "sprd,syscon-aon-apb": {
+        "path": "/soc/syscon@64900000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 2,
+        "register_region": {
+          "address": "0x64900000",
+          "bytes": "0x3000"
+        },
+        "syscon_cells": 2
+      },
+      "sprd,syscon-ana-g0l": {
+        "path": "/soc/syscon@64300000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 92,
+        "register_region": {
+          "address": "0x64300000",
+          "bytes": "0x3000"
+        },
+        "syscon_cells": 2
+      },
+      "sprd,syscon-ipa-apb": {
+        "path": "/soc/syscon@25000000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 85,
+        "register_region": {
+          "address": "0x25000000",
+          "bytes": "0x3000"
+        },
+        "syscon_cells": 2
+      },
+      "sprd,syscon-ipa-dispc1-glb-apb": {
+        "path": "/soc/syscon@31800000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 79,
+        "register_region": {
+          "address": "0x31800000",
+          "bytes": "0x3000"
+        },
+        "syscon_cells": 2
+      },
+      "sprd,syscon-ipa-usb31-dp": {
+        "path": "/soc/syscon@31810000",
+        "compatible": [
+          "sprd,ums9520-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 84,
+        "register_region": {
+          "address": "0x31810000",
+          "bytes": "0x1000"
+        },
+        "syscon_cells": 2
+      },
+      "sprd,syscon-ipa-usb31-dptx": {
+        "path": "/soc/syscon@31890000",
+        "compatible": [
+          "sprd,ums9520-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 93,
+        "register_region": {
+          "address": "0x31890000",
+          "bytes": "0x10000"
+        },
+        "syscon_cells": 2
+      }
+    },
+    "power_domain": {
+      "path": "/soc/aon/sipa-sys",
+      "compatible": [
+        "sprd,qogirn6pro-ipa-sys-power-domain"
+      ],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 78
+    },
+    "generic_phy_cells_property_present": false,
+    "legacy_phy_reused_for_usb2_and_usb3": true,
+    "clock_properties_present": []
+  },
+  "vbus_extcon": {
+    "path": "/extcon-gpio",
+    "compatible": [
+      "linux,extcon-usb-gpio"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "phandle": 522,
+    "vbus_gpio": {
+      "provider": {
+        "path": "/soc/aon/spi@400000/pmic@0/gpio@280",
+        "compatible": [
+          "sprd,ump96xx-eic",
+          "sprd,sc27xx-eic"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 104,
+        "register_cells": [
+          640
+        ],
+        "gpio_cells": 2,
+        "interrupt_cells_count": 2,
+        "interrupt_cells": [
+          4,
+          4
+        ],
+        "interrupt_parent_phandle": 96
+      },
+      "line": 0,
+      "flags": 0,
+      "active_low": false
+    },
+    "id_gpio_property_present": false,
+    "interpretation": "VBUS GPIO detection only; this node does not describe Type-C role or charger type",
+    "gpio_property_name": "vbus-gpio",
+    "gpio_property_presence": {
+      "gpios": false,
+      "id-gpio": false,
+      "id-gpios": false,
+      "vbus-gpio": true,
+      "vbus-gpios": false,
+      "extcon-gpio": false,
+      "extcon-gpios": false
+    },
+    "dt_debounce_properties": [],
+    "wakeup_source_property_present": false,
+    "explicit_irq_properties_present": [],
+    "gpio_irq_is_resolved_from_provider": true
+  },
+  "typec_extcon": {
+    "path": "/soc/aon/spi@400000/pmic@0/typec@380",
+    "compatible": [
+      "sprd,ump96xx-typec",
+      "sprd,sc27xx-typec"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "phandle": 109,
+    "pmic_parent": {
+      "path": "/soc/aon/spi@400000/pmic@0",
+      "compatible": [
+        "sprd,ump9620"
+      ],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 96
+    },
+    "register_cells": [
+      896
+    ],
+    "interrupt_parent": {
+      "path": "/soc/aon/spi@400000/pmic@0",
+      "compatible": [
+        "sprd,ump9620"
+      ],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 96
+    },
+    "interrupt_cells": [
+      8,
+      4
+    ],
+    "mode": 2,
+    "nvmem_calibration": [
+      {
+        "name": "typec_cc1_cal",
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@1b",
+          "compatible": [],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 107
+        },
+        "reg_cells": [
+          54,
+          2
+        ]
+      },
+      {
+        "name": "typec_cc2_cal",
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/efuse@c00/calib@1c",
+          "compatible": [],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 108
+        },
+        "reg_cells": [
+          55,
+          2
+        ]
+      }
+    ]
+  },
+  "pd_extcon": {
+    "path": "/soc/aon/spi@400000/pmic@0/pd@e00",
+    "compatible": [
+      "sprd,sc27xx-pd",
+      "sprd,ump9620-pd"
+    ],
+    "status_property": "okay",
+    "enabled_with_ancestors": true,
+    "phandle": 358,
+    "register_cells": [
+      3584,
+      896
+    ],
+    "interrupt_parent": {
+      "path": "/soc/aon/spi@400000/pmic@0",
+      "compatible": [
+        "sprd,ump9620"
+      ],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 96
+    },
+    "interrupt_cells": [
+      9,
+      4
+    ],
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/typec@380",
+          "compatible": [
+            "sprd,ump96xx-typec",
+            "sprd,sc27xx-typec"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 109
+        }
+      }
+    ]
+  },
+  "charger": {
+    "path": "/soc/ap-ahb/i2c@2260000/charger@6b",
+    "compatible": [
+      "Sgm,sgm41511_chg"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "phandle": 592,
+    "i2c_address": "0x6b",
+    "role_u32": 1,
+    "multi_charger_adapt_enable": true,
+    "pd_extcon_enable": true,
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/typec@380",
+          "compatible": [
+            "sprd,ump96xx-typec",
+            "sprd,sc27xx-typec"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 109
+        }
+      },
+      {
+        "index": 1,
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/pd@e00",
+          "compatible": [
+            "sprd,sc27xx-pd",
+            "sprd,ump9620-pd"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 358
+        }
+      }
+    ],
+    "phys_phandles": [
+      {
+        "path": "/soc/ipa-apb/ssphy@25310000",
+        "compatible": [
+          "sprd,qogirn6pro-ssphy"
+        ],
+        "status_property": "okay",
+        "enabled_with_ancestors": true,
+        "phandle": 90
+      }
+    ],
+    "interpretation": "role is the raw vendor numeric value; no host/device or master/slave meaning is inferred"
+  },
+  "charge_pump": {
+    "path": "/soc/ap-ahb/i2c@2270000/sc8551-charger@66",
+    "compatible": [
+      "sc,sc8551-standalone"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "i2c_address": "0x66",
+    "interrupt_gpio": {
+      "provider": {
+        "path": "/soc/aon/gpio@170000",
+        "compatible": [
+          "sprd,qogirn6pro-gpio",
+          "sprd,qogirl6-gpio"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 86
+      },
+      "line": 193,
+      "flags": 1,
+      "active_low": true
+    }
+  },
+  "charger_manager": {
+    "path": "/charger-manager",
+    "compatible": [
+      "charger-manager"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "supply_name_properties": {
+      "cm-power-supplys": [
+        "sgm41511_charger",
+        "sgm41513_charger"
+      ],
+      "cm-alt-cp-power-supplys": [
+        "upm6710-standalone"
+      ],
+      "cm-fuel-gauge": [
+        "sc27xx-fgu"
+      ],
+      "cm-fast-chargers": [
+        "sc2730_fast_charger"
+      ],
+      "cm-charge-pumps": [
+        "sc8551-standalone"
+      ],
+      "cm-chargers": [
+        "sgm41511_charger"
+      ],
+      "cm-name": [
+        "battery"
+      ]
+    },
+    "interpretation": "The manager contains fallback candidate names. These names alone do not identify fitted chips or establish actual boost ownership."
+  },
+  "pmic_syscon": {
+    "path": "/soc/aon/spi@400000/pmic@0/syscon@2000",
+    "compatible": [
+      "sprd,ump962x-syscon"
+    ],
+    "reg_cells": [
+      8192,
+      9120,
+      9112
+    ],
+    "interpretation": "Vendor reg layout preserved as cells; no register function is inferred from positions."
+  },
+  "unresolved": [
+    "Original active USB controller/UDC and physical mux selection: both AON MUSB and IPA DWC3 are enabled in DT",
+    "PMIC EIC provider compatible mismatch: sprd,ump96xx-eic/sprd,sc27xx-eic versus pinned driver sprd,sc2731-eic only",
+    "Actual owner and call sequence for DPDM data/BC1.2/fast-charge switching",
+    "Actual boost regulator driver and OTG enable/disable ordering",
+    "Live Type-C, VBUS, USB enumeration, standard/fast charge and OTG transition observations",
+    "Replacement-kernel compatibility of PMIC EIC, Type-C/PD, charger-manager and PHY binding paths"
+  ],
+  "validation": {
+    "phone_contacted": false,
+    "new_device_reads": false,
+    "raw_dt_published": false,
+    "usb_hardware_validated": false,
+    "charging_hardware_validated": false
+  },
+  "fixed_baseline_source_review": {
+    "kernel_revision": "020b970e351eee3887e6caaf2d653926e7086e44",
+    "source_sha256": {
+      "drivers/extcon/extcon-usb-gpio.c": "7098f3d604a683f95997e4499704790be5237bfd345c415665e69f7c1b51e31d",
+      "drivers/gpio/gpio-pmic-eic-sprd.c": "11a9475d9a632629a81d6c6a6216c4e92cbd9aed576bbfda0ca2ed5b0f089f62",
+      "drivers/gpio/gpiolib-of.c": "58e3ccd3253b52ebd14d304841c54406e0eff2d032a3f6934295515fa69dca9f",
+      "drivers/mfd/sprd-sc27xx-spi.c": "8f32cdda38e60002eb3f8cc83afa38c1b9fb0a974786c4e4a9d869560b641214"
+    },
+    "extcon_consumer_binding_supported": true,
+    "evidence": [
+      "extcon-usb-gpio.c matches linux,extcon-usb-gpio and obtains optional vbus GPIO by consumer name",
+      "gpiolib-of.c tries both foo-gpios and legacy foo-gpio names",
+      "With only VBUS, extcon-usb-gpio sets ID to 1 and reports EXTCON_USB; it does not report host role",
+      "extcon-usb-gpio uses 20ms debounce, falling back to delayed work when GPIO debounce is unavailable; it requests rising/falling IRQ and sets wakeup capable at probe",
+      "gpio-pmic-eic-sprd.c only matches sprd,sc2731-eic; it does not match either stock UMP96xx/sc27xx compatible",
+      "sprd-sc27xx-spi.c populates OF child nodes rather than providing an EIC platform alias"
+    ],
+    "eic_provider_binding_supported": false,
+    "entire_vbus_chain_supported": false,
+    "interpretation": "Consumer property support does not imply provider support. PMIC EIC compatibility/register behavior must be reviewed before this stock VBUS chain can bind.",
+    "vendor_eic_comparison": {
+      "repository": "https://github.com/realme-kernel-opensource/realme_C51_C53_Narzo-N53-AndroidT-kernel-source",
+      "revision": "4381465ccaf87fcf3215b9cd42f4a685df40e5e0",
+      "path": "drivers/gpio/gpio-pmic-eic-sprd.c",
+      "sha256": "b9ab2ad7f8085caf90fef6d08c3c256c52157fa244aef5e63ddaf864e76e203d",
+      "matches_stock_compatible": false,
+      "matched_compatible": [
+        "sprd,sc2731-eic"
+      ],
+      "interpretation": "This file uses the SC2731-compatible register layout but does not supply UMP96xx-specific evidence. Adding an alias based only on these two files would not establish UMP9620 EIC compatibility.",
+      "register_layout_shared_by_sc2731_sources": {
+        "DATA": "0x0",
+        "DMSK": "0x4",
+        "IEV": "0x14",
+        "IE": "0x18",
+        "RIS": "0x1c",
+        "MIS": "0x20",
+        "IC": "0x24",
+        "TRIG": "0x28",
+        "CTRL0": "0x40",
+        "lines_per_bank": 16,
+        "data_mask": "GENMASK(15,0)",
+        "debounce_mask": "GENMASK(11,0)",
+        "debounce_register_stride_bytes": 4,
+        "debounce_encoding": "(microseconds / 1000) & GENMASK(11,0)",
+        "supported_irq_types": [
+          "level-high",
+          "level-low",
+          "rising",
+          "falling",
+          "both-edges"
+        ],
+        "edge_handling": "Emulate edges by selecting level polarity from current EIC input"
+      },
+      "differences": "Baseline caches three u16 bank bitmaps and uses the modern immutable gpio irqchip API; vendor caches per-line bytes. Both use the same inspected SC2731 register definitions and debounce function.",
+      "ump96xx_support_proven": false,
+      "missing_evidence": "Neither inspected source matches sprd,ump96xx-eic or sprd,sc27xx-eic. Need actual UMP9620 EIC implementation/register documentation or equivalent model-specific evidence before adding compatible aliases."
+    }
+  },
+  "aon_usb2_phy": {
+    "path": "/soc/aon/hsphy@300000",
+    "compatible": [
+      "sprd,qogirn6pro-phy"
+    ],
+    "status_property": "okay",
+    "enabled_with_ancestors": true,
+    "phandle": 119,
+    "register_region": {
+      "address": "0x300000",
+      "bytes": "0x10000"
+    },
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/extcon-gpio",
+          "compatible": [
+            "linux,extcon-usb-gpio"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 522
+        }
+      }
+    ],
+    "vdd_supply": {
+      "path": "/soc/aon/spi@400000/pmic@0/power-controller@2000/LDO_VDDUSB33",
+      "compatible": [],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 382
+    },
+    "requested_microvolt": 3300000,
+    "host_eye_pattern": "0x67bd1c0",
+    "device_eye_pattern": "0x67bd1c0",
+    "phy_cells": 0,
+    "clock_properties_present": [],
+    "syscons": {
+      "sprd,syscon-enable": {
+        "path": "/soc/syscon@64900000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 2
+      },
+      "sprd,syscon-anag0": {
+        "path": "/soc/syscon@64300000",
+        "compatible": [
+          "sprd,ums9620-glbregs",
+          "syscon"
+        ],
+        "status_property": null,
+        "enabled_with_ancestors": true,
+        "phandle": 92
+      }
+    }
+  },
+  "aon_musb_controller": {
+    "path": "/soc/aon/usb@a00000",
+    "compatible": [
+      "sprd,qogirn6pro-musb"
+    ],
+    "status_property": "okay",
+    "enabled_with_ancestors": true,
+    "phandle": 413,
+    "register_region": {
+      "address": "0xa00000",
+      "bytes": "0x2000"
+    },
+    "interrupt_cells": [
+      0,
+      8,
+      4
+    ],
+    "interrupt_names": [
+      "mc"
+    ],
+    "extcon_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/extcon-gpio",
+          "compatible": [
+            "linux,extcon-usb-gpio"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 522
+        }
+      },
+      {
+        "index": 1,
+        "provider": {
+          "path": "/soc/aon/spi@400000/pmic@0/typec@380",
+          "compatible": [
+            "sprd,ump96xx-typec",
+            "sprd,sc27xx-typec"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 109
+        }
+      }
+    ],
+    "legacy_usb_phy_order": [
+      {
+        "index": 0,
+        "provider": {
+          "path": "/soc/aon/hsphy@300000",
+          "compatible": [
+            "sprd,qogirn6pro-phy"
+          ],
+          "status_property": "okay",
+          "enabled_with_ancestors": true,
+          "phandle": 119
+        }
+      }
+    ],
+    "phy_names": [
+      "usb"
+    ],
+    "vendor_dr_mode_property_name": "dr-mode",
+    "vendor_dr_mode": "peripheral",
+    "multipoint": true,
+    "clocks": [
+      {
+        "name": "core_clk",
+        "provider": {
+          "path": "/soc/aonapb-gate",
+          "compatible": [
+            "sprd,ums9620-aon-gate"
+          ],
+          "status_property": null,
+          "enabled_with_ancestors": true,
+          "phandle": 31
+        },
+        "specifier_cells": 1,
+        "args": [
+          26
+        ]
+      }
+    ],
+    "vbus_supply": {
+      "path": "/charger-manager/cm_otg_vbus",
+      "compatible": [],
+      "status_property": null,
+      "enabled_with_ancestors": true,
+      "phandle": 563
+    }
+  },
+  "pd_connector": {
+    "path": "/soc/aon/spi@400000/pmic@0/pd@e00/connector",
+    "compatible": [
+      "usb-c-connector"
+    ],
+    "status_property": null,
+    "enabled_with_ancestors": true,
+    "phandle": 589,
+    "label": "USB-C",
+    "power-role": "dual",
+    "try-power-role": "sink",
+    "sink-pdos": [
+      67211564,
+      3235651900
+    ],
+    "source-pdos": [
+      67211304
+    ],
+    "op-sink-microwatt": [
+      10000000
+    ]
+  },
+  "controller_selection": {
+    "both_ipa_dwc3_and_aon_musb_enabled_in_stock_dt": true,
+    "both_paths_share_vbus_extcon_typec_extcon_and_vdd_supplies": true,
+    "live_selected_controller_known_from_dt": false,
+    "interpretation": "Enabled nodes do not identify the physical USB mux selection or actually bound/active UDC. Probe-time forced mux changes would require separate original behavior evidence."
+  }
+}

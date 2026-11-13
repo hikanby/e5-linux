@@ -6,7 +6,7 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 REVISION = '020b970e351eee3887e6caaf2d653926e7086e44'
-COMPONENTS = ('clocks.py', 'pinctrl.py', 'usb.py')
+COMPONENTS = ('clocks.py', 'pinctrl.py', 'usb.py', 'usb-phy.py', 'dwc3.py')
 
 
 def apply(kernel):

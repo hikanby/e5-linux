@@ -25,6 +25,10 @@ REQUIRED_OBJECTS = (
     'drivers/pinctrl/sprd/pinctrl-sprd-qogirn6pro.o',
     'drivers/ufs/host/ufs-sprd-qogirn6pro.o',
     'drivers/pmdomain/sprd/ums9620-ipa-sys.o',
+    'drivers/usb/phy/phy-sprd-ums9620-ssphy.o',
+    'drivers/usb/dwc3/dwc3.o',
+    'drivers/usb/dwc3/dwc3-of-simple.o',
+    'drivers/extcon/extcon-usb-gpio.o',
 )
 BOUNDARY = {
     'artifact_kind': 'experimental-platform-kernel-compile-only',
@@ -36,6 +40,13 @@ BOUNDARY = {
     'phone_contacted': False,
     'hardware_validated': False,
     'usb_phy_and_board_policy_adapted': False,
+    'usb_phy_driver_compiled': True,
+    'usb_board_role_policy_adapted': False,
+    'active_stock_usb_controller_confirmed': False,
+    'usb_controller_mux_hardware_validated': False,
+    'pmic_eic_binding_adapted': False,
+    'dwc3_legacy_phy_init_error_handling_adapted': False,
+    'pmic_vbus_event_chain_hardware_validated': False,
     'instructions': 'Do not flash. This is not a boot image or an installable OpenWrt release.',
 }
 

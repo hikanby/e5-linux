@@ -26,6 +26,6 @@
     "state_encoding": "pins string and sprd,control cell",
     "evidence": "Sanitized observations of the owner's original Android DT; no original DT or private identifiers included"
   },
-  "compiled": false,
+  "compile_result": "Recorded per Actions run in BUILD-RESULT.json; preparation alone is not a compile check",
   "hardware_validated": false
 }

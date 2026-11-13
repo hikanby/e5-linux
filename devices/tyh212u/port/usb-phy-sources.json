@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/kanoqwq/mu300-linux",
+  "commit": "23361cea515950e19abd02f1816142c324d3e03d",
+  "input_root": "devices/m8/port",
+  "kernel_revision": "020b970e351eee3887e6caaf2d653926e7086e44",
+  "files": {
+    "drivers/usb/phy/phy-sprd-ums9620-ssphy.c": "0d25e915d7e4be8e0ef605f5b6c6dd2ed142f9a7f9d23eaa04916d06f0f898a4",
+    "include/dt-bindings/soc/sprd,qogirn6pro-mask.h": "0709197623ca1d0980b4b627eb10c4ee860cf498833039af146b74d024be3783",
+    "include/dt-bindings/soc/sprd,qogirn6pro-regs.h": "048c5a1af9d0020c9f107f45a0d80790cb8289f9b8c02ec7b301a26bf5e0ede2"
+  },
+  "prepared_files": {
+    "drivers/usb/phy/phy-sprd-ums9620-ssphy.c": "68824712ead3998d3b468b9b26277dffcf84795901f829f375df45b58a6041bd",
+    "include/dt-bindings/soc/sprd,qogirn6pro-mask.h": "0709197623ca1d0980b4b627eb10c4ee860cf498833039af146b74d024be3783",
+    "include/dt-bindings/soc/sprd,qogirn6pro-regs.h": "048c5a1af9d0020c9f107f45a0d80790cb8289f9b8c02ec7b301a26bf5e0ede2"
+  },
+  "kernel_api_files": {
+    "include/linux/usb/phy.h": "5217fcd17d4b5c62eab3b5b40afb81294baadbe2503e544ed99a7146e29262e2",
+    "include/linux/iopoll.h": "9edf274f8555e266233ba151942af51e83ad175d885478556075258044dd3a0b"
+  },
+  "scope": "Experimental PHY hardware compilation only. PMIC DPDM/BC1.2, Type-C/boost coordination and phone operation are not implemented. No M8 preparation or DT rewrite is executed.",
+  "adaptations": [
+    "Remove PMIC global-first discovery and DPDM register access; board ownership remains unadapted",
+    "Preserve original extcon topology; remove other-model DT mutation",
+    "Propagate every regmap error in initialization, reset, eye pattern and role callbacks",
+    "Fail SRAM/TCA poll expiry and TCA timeout interrupt without marking initialization successful",
+    "Unwind failed initialization through PHY shutdown; track and balance this regulator consumer enable reference",
+    "Require vdd acquisition and voltage programming to succeed; do not perform controller register writes during probe",
+    "Unregister PHY before shutdown on removal; keep devm supply ownership"
+  ],
+  "hardware_validated": false,
+  "board_policy_adapted": false
+}

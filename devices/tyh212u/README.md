@@ -26,18 +26,26 @@ IMEI、MAC、NV 或厂商固件。
 | Android 实际绑定 | sgm41511_chg、sc8551-charger、omnivision_tcm_spi |
 | 显示 / 触摸 | 精确面板和触控芯片型号仍未确认 |
 
-已有 root 不等于 bootloader 会接受修改镜像。原厂属性与命令行的锁状态证据存在
-冲突，不能据此声称启动链已开放。设备恢复路径尚未验证。
+原厂属性与命令行的锁状态证据存在冲突。2026-11-14，设备所有者说明曾自行
+刷入修改后的 boot，且知道恢复方法；这支持修改镜像曾被接受，但尚未验证
+本实验内核的接受条件、具体恢复步骤及恢复结果。
 
 UFS 原厂节点使用 `sprd,ufshc` 和打包的 `syscon-names`/`syscons`，没有标准
 `resets` 属性；其时钟、校准 cell 与 `vdd-mphy` 名称和已有 QogirN6Pro 驱动相符。
 公共 UFS 驱动现可解析这两种 syscon/reset 表达方式，`prepare-ufs.py` 是该组件的
 固定基线入口。独立 ARM64 UFS 对象已通过云编译；复位寄存器行为仍待本机验证。
 
-`prepare-kernel.py` 仅接入已核对来源和原厂绑定的 UMS9620 时钟、QogirN6Pro
-引脚、UFS 以及 IPA 电源域。复用 `devices/m8/port/` 中固定摘要的 SoC 源文件，
+`prepare-kernel.py` 接入已核对来源和原厂绑定的 UMS9620 时钟、QogirN6Pro
+引脚、UFS、IPA 电源域及实验 USB 组件。复用 `devices/m8/port/` 中固定摘要的 SoC 源文件，
 不执行 M8 整机准备脚本，不导入其他机型的 DT 或充电策略。GPU 的两个时钟
-provider 尚缺；USB PHY、角色切换与充电策略尚未接入。
+provider 尚缺。USB PHY 作为独立模块编译；已移除参考机型的 PMIC DPDM 写入、
+全局 PMIC 查找和 extcon 改写。DWC3 仅补充父节点 compatible。
+原厂双 extcon、BC1.2、OTG 供电和角色状态机尚未实现，不能据此启动 USB。
+原厂 DT 同时启用 IPA DWC3 和 AON MUSB，后者为 peripheral；实际控制器绑定
+与 mux 选择仍未知。实验 PHY 的 init 仍有未经本机验证的 IPA mux 序列，
+且 PMIC EIC 的原厂 compatible 与基线驱动不匹配，不能直接加载测试 USB。
+本机脱敏接线见 `usb-stock-bindings.json`，来源对照与限制见
+[USB-POLICY-EVIDENCE.zh-CN.md](USB-POLICY-EVIDENCE.zh-CN.md)。
 
 ## GitHub Actions 做什么
 

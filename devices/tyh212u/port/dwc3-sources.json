@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/Enceka/linux-lts-e5",
+  "revision": "020b970e351eee3887e6caaf2d653926e7086e44",
+  "path": "drivers/usb/dwc3/dwc3-of-simple.c",
+  "baseline_sha256": "b251e769eab6a582b2876ae71231b6de5e3fbdb0962a2b4c572a968538a43a4d",
+  "prepared_sha256": "8269386ebecc67de56c133b7356654e1107b3fac6d4777feaa071dd8a356717a",
+  "adaptation": "Add only the stock parent compatible sprd,qogirn6pro-dwc3 to existing generic clock/reset glue; child is already snps,dwc3",
+  "boundary": "Compile-only. Does not implement the vendor dual-extcon, BC1.2 gating, charger-manager VBUS/boost or Type-C state machine. No board DT or boot image is supplied."
+}
