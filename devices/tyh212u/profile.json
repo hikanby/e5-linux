@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "profile": "tyh212u",
+  "display_name": "China Telecom Tianyi 1 2022",
+  "identity": {
+    "model": "TYH212U",
+    "device": "ARES",
+    "board": "ums9620_2h10",
+    "platform": "ums9620",
+    "architecture": "arm64"
+  },
+  "evidence_scope": "Sanitized observations from the owner's original Android installation; no private firmware or identifiers are included",
+  "observed_android": {
+    "version": "11",
+    "kernel_version": "4.14.199",
+    "boot_header_version": 2,
+    "boot_header_bytes": 1660,
+    "boot_page_bytes": 2048,
+    "boot_contains_dtb": true,
+    "boot_has_avb_metadata": true,
+    "active_vendor_boot_all_zero": true,
+    "initramfs_compression": {
+      "gzip": true,
+      "lz4": false
+    },
+    "network_config": {
+      "TUN": true,
+      "NET_NS": true,
+      "VETH": true,
+      "BRIDGE": false,
+      "NF_TABLES": false
+    }
+  },
+  "observed_hardware_bindings": {
+    "interpretation": "Enabled DT bindings and actual Android driver links are separate evidence. Neither proves replacement-kernel functionality or the exact fitted chip revision",
+    "storage": {
+      "type": "UFS",
+      "enabled_dt_compatible": "sprd,ufshc",
+      "stock_kconfig": "SCSI_UFS_SPRD_QOGIRN6PRO"
+    },
+    "pmic_dt_compatibles": ["sprd,ump9620", "sprd,ump9621", "sprd,ump9622"],
+    "wifi": {
+      "enabled_dt_compatible": "sprd,sc2355-wifi",
+      "stock_kconfig": "SC2355_P"
+    },
+    "chargers": [
+      {
+        "android_bound_driver": "sgm41511_chg",
+        "i2c_address": "0x6b",
+        "enabled_dt_compatible": "Sgm,sgm41511_chg",
+        "stock_kconfig": "CHARGER_SGM41511"
+      },
+      {
+        "android_bound_driver": "sc8551-charger",
+        "i2c_address": "0x66",
+        "enabled_dt_compatible": "sc,sc8551-standalone",
+        "stock_kconfig": "CHARGER_SC8551"
+      }
+    ],
+    "touch": {
+      "android_input_name": "omnivision_tcm_touch",
+      "android_bound_driver": "omnivision_tcm_spi",
+      "exact_controller_model": null,
+      "confirmed_dt_compatible": null,
+      "stock_framework_kconfig": "TOUCHSCREEN_ADAPTIVE"
+    },
+    "display": {
+      "android_bound_driver": "sprd-mipi-panel-drv",
+      "exact_panel_model": null
+    }
+  },
+  "kernel_baseline": {
+    "repository": "https://github.com/Enceka/linux-lts-e5",
+    "revision": "020b970e351eee3887e6caaf2d653926e7086e44",
+    "version": "6.18.54",
+    "role": "Pinned donor for source coverage auditing; board adaptation and matching Image/modules have not been built"
+  },
+  "status": {
+    "bootable": false,
+    "openwrt_built": false,
+    "openwrt_booted": false,
+    "target_kernel_built": false,
+    "hardware_validated": false,
+    "recovery_validated": false,
+    "installation_supported": false,
+    "updates_supported": false
+  },
+  "ci_scope": "Offline boot-v2/initramfs tooling, static AArch64 BusyBox diagnostic archive build and textual source coverage only; no target kernel build, phone connection, flashing, signing or board support claim"
+}

@@ -1,0 +1,137 @@
+name: TYH212U diagnostic foundation
+run-name: TYH212U diagnostics · ${{ github.ref_name }} · attempt ${{ github.run_attempt }}
+
+on:
+  push:
+    branches: ['feat/tyh212u-cloud']
+    paths:
+      - '.github/workflows/tyh212u-diagnostics.yml'
+      - 'devices/tyh212u/**'
+      - 'tools/build-release.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tyh212u-diagnostics-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  tests:
+    name: Offline tool tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Test TYH212U tools and command-only wrapper
+        run: python3 -m unittest discover -s devices/tyh212u/tools -p 'test_*.py' -v
+
+  diagnostics:
+    name: Build AArch64 RAM diagnostics (not firmware)
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Install declared cross-build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+            binutils-aarch64-linux-gnu qemu-user python3 bzip2 file git ca-certificates
+      - name: Build checksum-pinned BusyBox and diagnostic initramfs
+        run: |
+          python3 tools/build-release.py run --command-only \
+            --workspace "$RUNNER_TEMP/tyh212u-workspace" --label tyh212u-diagnostics -- \
+            python3 devices/tyh212u/build-diagnostics.py \
+              --workspace "$RUNNER_TEMP/tyh212u-workspace" \
+              --out "$GITHUB_WORKSPACE/out/tyh212u-diagnostics"
+      - name: Verify final artifact checksums
+        working-directory: out/tyh212u-diagnostics
+        run: sha256sum --check SHA256SUMS
+      - name: State artifact boundary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## TYH212U diagnostic components only
+          Built a static AArch64 BusyBox and a gzip/newc RAM diagnostic archive.
+          QEMU runs applet smoke checks and parses the archive's init with sh -n; it never executes init.
+          No target kernel, boot.img, OpenWrt firmware, AVB signature, phone boot or hardware validation.
+          Do not flash these artifacts.
+          SUMMARY
+      - name: Upload verified diagnostic components and matching source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tyh212u-ram-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/tyh212u-diagnostics/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload task logs and failed output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tyh212u-build-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            out/build-logs/
+            out/build-state/
+            out/tyh212u-diagnostics/DIAGNOSTICS-FAILED.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  kernel-audit:
+    name: Audit pinned donor source (no kernel build)
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Check out immutable donor kernel revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: Enceka/linux-lts-e5
+          ref: 020b970e351eee3887e6caaf2d653926e7086e44
+          path: ci/tyh212u-linux
+          submodules: recursive
+          persist-credentials: false
+      - name: Audit exact tokens in reviewed source scopes
+        run: |
+          mkdir -p out/tyh212u-kernel-audit
+          python3 devices/tyh212u/audit-kernel.py \
+            --kernel "$GITHUB_WORKSPACE/ci/tyh212u-linux" \
+            --out "$GITHUB_WORKSPACE/out/tyh212u-kernel-audit/source-coverage.json"
+          cp devices/tyh212u/profile.json out/tyh212u-kernel-audit/
+          cd out/tyh212u-kernel-audit
+          sha256sum source-coverage.json profile.json > SHA256SUMS
+          sha256sum --check SHA256SUMS
+      - name: State source-audit boundary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Pinned donor-source audit only
+          The report records exact textual matches in reviewed directories of Linux 6.18.54.
+          Matches do not prove driver build linkage, board support or hardware functionality.
+          Missing matches do not prove absence from the entire source tree.
+          No other model's preparation script is applied; no kernel is compiled.
+          SUMMARY
+      - name: Upload source coverage report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tyh212u-source-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/tyh212u-kernel-audit/
+          if-no-files-found: error
+          retention-days: 14

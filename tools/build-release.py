@@ -44,15 +44,20 @@ def write_json(path, value):
             time.sleep(0.05)
 
 
-def layout(config, workspace, profiles, repo=TOP):
-    data = json.loads(config.read_text(encoding='utf-8'))
-    if data.get('format') != 1:
-        raise ValueError('Unsupported build layout')
+def validate_workspace(workspace):
     workspace = workspace.expanduser().resolve()
     if workspace == Path('/') or workspace == Path.home():
         raise ValueError('Choose a dedicated build workspace')
     if workspace == Path('/mnt/c') or workspace.is_relative_to('/mnt/c'):
         raise ValueError('Build workspace must not migrate to C:')
+    return workspace
+
+
+def layout(config, workspace, profiles, repo=TOP):
+    data = json.loads(config.read_text(encoding='utf-8'))
+    if data.get('format') != 1:
+        raise ValueError('Unsupported build layout')
+    workspace = validate_workspace(workspace)
     values = {'repo': str(repo.resolve()), 'workspace': str(workspace)}
     def path(value):
         result = Path(value.format(**values)).expanduser()
@@ -371,18 +376,25 @@ def main():
     parser.add_argument('--config', type=Path, default=TOP / 'tools/build-layout.json')
     parser.add_argument('--label', default='build')
     parser.add_argument('--source-release',type=Path)
+    parser.add_argument('--command-only', action='store_true',
+                        help='run only: retain task lock/logging without firmware or installer input layout')
     # Compiler arguments follow -- and are passed without a shell.
     args, command = parser.parse_known_args()
     if command and command[0] == '--': command = command[1:]
     if command and args.action != 'run': parser.error('Unexpected extra arguments')
+    if args.command_only and args.action != 'run': parser.error('--command-only is valid only with run')
     if os.name == 'nt': parser.error('Run in WSL; see docs/LOCAL-BUILD.zh-CN.md')
     workspace = args.workspace.expanduser().resolve()
     profiles = list(PROFILES) if 'all' in args.profiles else list(dict.fromkeys(args.profiles))
-    common, rows = layout(args.config, workspace, profiles)
+    if args.command_only:
+        workspace = validate_workspace(workspace)
+    else:
+        common, rows = layout(args.config, workspace, profiles)
     os.environ['OPENWRT_BUILD_WORKSPACE'] = str(workspace)
-    os.environ['E5_BUILD_LAYOUT'] = str(args.config.resolve())
-    for platform, variable in (('windows-x64','OPENWRT_GUI_ARTIFACT'), ('macos-arm64','OPENWRT_GUI_MACOS_ARTIFACT'), ('android-aarch64','OPENWRT_GUI_ANDROID_ARTIFACT')):
-        os.environ.setdefault(variable, str(installer_artifact(platform, workspace)))
+    if not args.command_only:
+        os.environ['E5_BUILD_LAYOUT'] = str(args.config.resolve())
+        for platform, variable in (('windows-x64','OPENWRT_GUI_ARTIFACT'), ('macos-arm64','OPENWRT_GUI_MACOS_ARTIFACT'), ('android-aarch64','OPENWRT_GUI_ANDROID_ARTIFACT')):
+            os.environ.setdefault(variable, str(installer_artifact(platform, workspace)))
     if args.action == 'plan':
         print(json.dumps({'workspace': str(workspace), 'inputs': common, 'profiles': rows,
               'staging': workspace / 'package-work/e5-release', 'output': TOP / 'out/releases',
