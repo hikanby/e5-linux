@@ -46,6 +46,58 @@ class BuildDiagnosticsTests(unittest.TestCase):
         with self.assertRaises(builder.BuildError):
             builder.config_values("CONFIG_STATIC=y\nCONFIG_STATIC=y\n")
 
+    def test_seed_merge_overrides_allnoconfig_and_preserves_other_config(self):
+        seed = 'CONFIG_STATIC=y\nCONFIG_CROSS_COMPILER_PREFIX="aarch64-linux-gnu-"\n# CONFIG_PIE is not set\n'
+        base = 'CONFIG_STATIC=n\nCONFIG_CROSS_COMPILER_PREFIX=""\nCONFIG_PIE=y\nCONFIG_KEEP_ME=y\n'
+        merged = builder.merge_config(base, seed)
+        self.assertEqual(builder.config_values(merged), {
+            "STATIC": "y", "CROSS_COMPILER_PREFIX": '"aarch64-linux-gnu-"',
+            "PIE": "n", "KEEP_ME": "y"})
+
+    def test_seed_merge_rejects_duplicate_unknown_and_bad_quoted_values(self):
+        with self.assertRaisesRegex(builder.BuildError, "Duplicate seed"):
+            builder.merge_config("CONFIG_STATIC=n\n", "CONFIG_STATIC=y\nCONFIG_STATIC=n\n")
+        with self.assertRaisesRegex(builder.BuildError, "absent"):
+            builder.merge_config("CONFIG_STATIC=n\n", "CONFIG_NOT_IN_BUSYBOX=y\n")
+        with self.assertRaisesRegex(builder.BuildError, "Duplicate config key"):
+            builder.merge_config("CONFIG_STATIC=n\nCONFIG_STATIC=n\n", "CONFIG_STATIC=y\n")
+        for value in ('"unterminated', '"bad\\q"', '"two" tokens'):
+            with self.subTest(value=value), self.assertRaises(builder.BuildError):
+                builder.seed_entries("CONFIG_STRING=" + value + "\n")
+        self.assertEqual(builder.seed_entries('CONFIG_STRING="escaped \\\" quote"\n')["STRING"][0],
+                         '"escaped \\\" quote"')
+
+    def test_configure_sequence_merges_then_oldconfig_with_default_stdin(self):
+        seed = builder.SEED_PATH.read_text()
+        seed_values = builder.seed_entries(seed)
+        with tempfile.TemporaryDirectory() as directory:
+            objects = Path(directory)
+            base_lines = [f"# CONFIG_{name} is not set" if value != '"aarch64-linux-gnu-"'
+                          else f"CONFIG_{name}=\"\"" for name, (value, _line) in seed_values.items()]
+            # Add every seeded string explicitly, retaining normal Kconfig formatting.
+            base = "\n".join(base_lines) + "\n"
+            config = objects / ".config"
+            config.write_text(base)
+            commands = []
+
+            def record(command, **kwargs):
+                commands.append((command, kwargs))
+                if command[-1] == "allnoconfig":
+                    self.assertEqual(kwargs["data"], b"")
+                    self.assertFalse(kwargs["capture"])
+                elif command[-1] == "oldconfig":
+                    self.assertEqual(builder.config_values(config.read_text()), builder.config_values(seed))
+                    self.assertEqual(kwargs["data"], b"\n" * 16384)
+                    self.assertFalse(kwargs["capture"])
+                    self.assertNotIn("KCONFIG_ALLCONFIG", kwargs["env"])
+                return None
+
+            with mock.patch.object(builder, "run", side_effect=record):
+                result = builder.configure_busybox(["make", "-C", "src"], objects, {}, seed)
+            self.assertEqual(builder.config_values(result), builder.config_values(seed))
+            self.assertEqual([command[-1] for command, _kwargs in commands], ["allnoconfig", "oldconfig"])
+            self.assertFalse((objects / ".config.tyh212u-seeded").exists())
+
     def test_actual_applet_list_required_and_unexpected_rejected(self):
         required = builder.load_archive_tool().REQUIRED_APPLETS
         listing = "\n".join(sorted(required | {"ash"})) + "\n"

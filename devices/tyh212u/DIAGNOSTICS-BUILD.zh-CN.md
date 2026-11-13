@@ -41,8 +41,10 @@ SHA-256 `3311dff32e746499f4df0d5df04d7eb396382d7e108bb9250e7b519b837043a4`。
 构建时按该摘要验证完整源包，拒绝未登记 URL、路径穿越、链接或特殊 tar 成员。
 不跟随最新版本，不执行远程安装脚本。
 
-`diagnostics-busybox.config` 由 `allnoconfig` 的 `KCONFIG_ALLCONFIG` 读取；
-随后核对实际 `.config`。配置静态非 PIE AArch64 ET_EXEC、ash 和所需少量 applet。
+`allnoconfig` 生成完整默认 `.config` 后，构建器逐项覆盖受跟踪 seed 中的
+配置项，再以 Python 子进程标准输入提供空行运行 `make oldconfig`，由 Kconfig
+解算依赖，最后逐项核对实际 `.config`。整个过程有超时，不调用 shell 或 yes。
+配置静态非 PIE AArch64 ET_EXEC、ash 和所需少量 applet。
 mount 保留 `-o` 安全标志，关闭 fstab/mtab、mount helper、标签/UUID、CIFS、NFS。
 原厂 `CONFIG_DEVTMPFS` 未启用，包内 `/dev` 只含 initramfs 的 console/null
 字符节点，不运行 mdev，不依赖 devtmpfs。

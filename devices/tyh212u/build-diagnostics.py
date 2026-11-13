@@ -105,6 +105,61 @@ def config_values(text: str) -> dict[str, str]:
     return result
 
 
+def seed_entries(text: str) -> dict[str, tuple[str, str]]:
+    """Parse only explicit, safe Kconfig assignments from the tracked seed."""
+    result = {}
+    for line in text.splitlines():
+        assignment = re.fullmatch(r"(CONFIG_([A-Z0-9_]+))=(.+)", line)
+        disabled = re.fullmatch(r"# (CONFIG_([A-Z0-9_]+)) is not set", line)
+        if not assignment and not disabled:
+            if line.strip() and not line.lstrip().startswith("#"):
+                raise BuildError("Unexpected syntax in tracked config seed")
+            continue
+        key, symbol = (assignment[1], assignment[2]) if assignment else (disabled[1], disabled[2])
+        value = assignment[3] if assignment else "n"
+        if symbol in result:
+            raise BuildError("Duplicate seed config key: " + symbol)
+        if value not in ("y", "m", "n") and not re.fullmatch(r'"(?:[^"\\\x00-\x1f]|\\["\\])*"', value):
+            raise BuildError("Invalid Kconfig value for " + symbol)
+        result[symbol] = (value, line)
+    if not result:
+        raise BuildError("Tracked config seed has no assignments")
+    return result
+
+
+def merge_config(base_text: str, seed_text: str) -> str:
+    """Apply every tracked seed entry over a complete allnoconfig result.
+
+    Requiring every seed symbol in the generated base prevents a misspelled or
+    version-incompatible setting from becoming an unrecognized .config item.
+    """
+    base_values = config_values(base_text)
+    seed = seed_entries(seed_text)
+    missing = sorted(set(seed) - set(base_values))
+    if missing:
+        raise BuildError("Seed symbols absent from generated BusyBox config: " + ", ".join(missing))
+    lines = base_text.splitlines()
+    seen = set()
+    for index, line in enumerate(lines):
+        assignment = re.fullmatch(r"CONFIG_([A-Z0-9_]+)=.+", line)
+        disabled = re.fullmatch(r"# CONFIG_([A-Z0-9_]+) is not set", line)
+        match = assignment or disabled
+        if match and match[1] in seed:
+            symbol = match[1]
+            if symbol in seen:
+                raise BuildError("Duplicate generated BusyBox config key: " + symbol)
+            seen.add(symbol)
+            lines[index] = seed[symbol][1]
+    if seen != set(seed):
+        raise BuildError("Failed to merge all tracked BusyBox seed symbols")
+    merged = "\n".join(lines) + ("\n" if base_text.endswith(("\n", "\r")) else "")
+    merged_values = config_values(merged)
+    for symbol, (value, _line) in seed.items():
+        if merged_values.get(symbol) != value:
+            raise BuildError("Seed merge verification failed for " + symbol)
+    return merged
+
+
 def verify_config(text: str, seed: str) -> None:
     actual, expected = config_values(text), config_values(seed)
     for name, value in expected.items():
@@ -265,6 +320,27 @@ def preflight(workspace: Path, out: Path) -> None:
             raise BuildError("Artifact output cannot replace a source/object/download tree")
 
 
+def configure_busybox(make: list[str], objects: Path, env: dict, seed: str) -> str:
+    run(make + ["allnoconfig"], env=env, capture=False, data=b"", timeout=600)
+    config_path = objects / ".config"
+    if config_path.is_symlink() or not config_path.is_file():
+        raise BuildError("BusyBox allnoconfig did not create a regular .config")
+    merged = merge_config(config_path.read_text(encoding="utf-8"), seed)
+    temporary = objects / ".config.tyh212u-seeded"
+    with temporary.open("x", encoding="utf-8", newline="\n") as output:
+        output.write(merged)
+    os.replace(temporary, config_path)
+
+    # BusyBox's allnoconfig intentionally resets requested y values to n.
+    # Feed the normal default answers to oldconfig through subprocess stdin;
+    # no shell/yes process is involved, and timeout bounds any unexpected prompt.
+    oldconfig_input = b"\n" * 16384
+    run(make + ["oldconfig"], env=env, capture=False, data=oldconfig_input, timeout=300)
+    resolved = config_path.read_text(encoding="utf-8")
+    verify_config(resolved, seed)
+    return resolved
+
+
 def smoke_busybox(binary: Path, init_path: Path, scratch: Path, required: frozenset[str], env: dict) -> tuple[list[str], list[dict]]:
     qemu = ["qemu-aarch64", str(binary)]
     listing = run(qemu + ["--list"], env=env).stdout.decode("utf-8")
@@ -314,10 +390,7 @@ def perform_build(workspace: Path, out: Path, lock: dict, env: dict) -> dict:
     objects.mkdir(parents=True, exist_ok=False)
     write_json_new(objects / ".tyh212u-diagnostics-objects.json", identity)
     make = ["make", "-C", str(source), "O=" + str(objects), "CROSS_COMPILE=" + PREFIX, "HOSTCC=gcc"]
-    configure_env = dict(env, KCONFIG_ALLCONFIG=str(SEED_PATH))
-    run(make + ["allnoconfig"], env=configure_env, capture=False, timeout=600)
-    resolved_config = (objects / ".config").read_text(encoding="utf-8")
-    verify_config(resolved_config, SEED_PATH.read_text(encoding="utf-8"))
+    resolved_config = configure_busybox(make, objects, env, SEED_PATH.read_text(encoding="utf-8"))
     run(make + [f"-j{JOBS}", "busybox"], env=env, capture=False, timeout=1200)
     binary_path = objects / "busybox"
     binary = binary_path.read_bytes()
@@ -365,7 +438,7 @@ def perform_build(workspace: Path, out: Path, lock: dict, env: dict) -> dict:
         raise BuildError("Tracked diagnostic build inputs changed during the build")
     return {"schema": 1, "repository_commit": commit, "source": lock, "input_sha256": initial_inputs,
             "busybox_elf": elf, "toolchain_versions": versions, "build_jobs": JOBS,
-            "config_method": "BusyBox allnoconfig with tracked KCONFIG_ALLCONFIG seed",
+            "config_method": "allnoconfig, tracked seed merge, noninteractive oldconfig, final resolved-config verification",
             "checks": smoke, "archive_entries": [name for name, _mode, _data, _rdev in recovered],
             "boundary": BOUNDARY, "source_date_epoch": 0,
             "reproducible_binary_across_different_toolchains_claimed": False}
