@@ -420,6 +420,18 @@ def perform_build(workspace: Path, out: Path, lock: dict, env: dict) -> dict:
     if extracted_init != (out / "diagnostic-init.sh").read_bytes():
         raise BuildError("Validated init differs from the final initramfs")
     archive_tool.write_new(out / "diagnostic.cpio.gz", compressed)
+    # Reuse the same verified BusyBox; the minram logging candidate is a
+    # separate archive, never an implicit change to the console-only init.
+    pmsg_archive = archive_tool.build(binary, manifest, "minram-pmsg")
+    pmsg_entries = archive_tool.parse_newc(gzip.decompress(pmsg_archive))
+    pmsg_init = {name: data for name, _mode, data, _rdev in pmsg_entries}["init"]
+    if pmsg_init != archive_tool.MINRAM_INIT:
+        raise BuildError("PMSG archive init differs from the tracked source")
+    archive_tool.write_new(out / "diagnostic-minram-pmsg-init.sh", pmsg_init)
+    run(["qemu-aarch64", str(binary_path), "sh", "-n",
+         str(out / "diagnostic-minram-pmsg-init.sh")], env=env, timeout=30)
+    smoke.append({"check": "minram-pmsg-init-syntax-only-not-executed", "passed": True})
+    archive_tool.write_new(out / "diagnostic-minram-pmsg.cpio.gz", pmsg_archive)
     copy_new(objects / ".config", out / "busybox.config")
     copy_new(SEED_PATH, out / "busybox-seed.config")
     copy_new(LOCK_PATH, out / "busybox-source.lock.json")
@@ -440,6 +452,11 @@ def perform_build(workspace: Path, out: Path, lock: dict, env: dict) -> dict:
             "busybox_elf": elf, "toolchain_versions": versions, "build_jobs": JOBS,
             "config_method": "allnoconfig, tracked seed merge, noninteractive oldconfig, final resolved-config verification",
             "checks": smoke, "archive_entries": [name for name, _mode, _data, _rdev in recovered],
+            "init_variants": {
+                "console": {"archive": "diagnostic.cpio.gz", "pmsg_writes": False},
+                "minram-pmsg": {"archive": "diagnostic-minram-pmsg.cpio.gz",
+                                "pmsg_writes": True, "requires_devtmpfs": True,
+                                "retention_validated": False}},
             "boundary": BOUNDARY, "source_date_epoch": 0,
             "reproducible_binary_across_different_toolchains_claimed": False}
 

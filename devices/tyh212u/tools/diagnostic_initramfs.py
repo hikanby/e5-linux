@@ -71,6 +71,54 @@ printf '%s\\n' 'Diagnostic finished; remaining idle in RAM'
 while :; do /bin/sleep 3600; done
 """
 
+# Separate, explicitly selected candidate for the minram kernel. PMSG records
+# use reserved RAM; retention across reboot and stock-reader compatibility are
+# unvalidated. Never run this init on Android or on the build host.
+MINRAM_INIT = b"""#!/bin/sh
+PATH=/bin
+export PATH
+umask 077
+trap '' HUP INT TERM
+pmsg_sink=/dev/pmsg0
+
+pmsg_record() {
+    if [ ! -c "$pmsg_sink" ]; then
+        printf '%s\\n' 'PMSG unavailable; record not saved'
+        return 1
+    fi
+    if printf 'TYH212U-MINRAM-v1 %s\\n' "$1" >"$pmsg_sink"; then
+        return 0
+    fi
+    printf '%s\\n' 'PMSG write failed; retention unvalidated'
+    return 1
+}
+
+stop() {
+    printf '%s\\n' "Diagnostic stopped: $1"
+    pmsg_record "stopped:$1" || :
+    while :; do /bin/sleep 3600; done
+}
+
+[ -c /dev/console ] || stop 'console unavailable'
+exec </dev/null >/dev/console 2>&1
+printf '%s\\n' 'TYH212U minimal RAM diagnostic; retention unvalidated'
+/bin/mount -t devtmpfs -o mode=0755,nosuid,noexec devtmpfs /dev || stop 'devtmpfs unavailable'
+pmsg_record 'init-entered' || :
+/bin/mount -t proc -o ro,nosuid,nodev,noexec proc /proc || stop 'proc unavailable'
+/bin/mount -t sysfs -o ro,nosuid,nodev,noexec sysfs /sys || stop 'sysfs unavailable'
+/bin/mount -t tmpfs -o mode=0700,nosuid,nodev,noexec,size=1m tmpfs /run || stop 'RAM log unavailable'
+
+kernel=$(/bin/uname -srvm) || stop 'uname failed'
+printf '%s\\n' "$kernel" > /run/diagnostic.txt || stop 'RAM report failed'
+/bin/cat /run/diagnostic.txt
+pmsg_record "kernel:$kernel" || :
+pmsg_record 'diagnostic-finished-idle' || :
+printf '%s\\n' 'Diagnostic finished; remaining idle in RAM'
+while :; do /bin/sleep 3600; done
+"""
+
+INIT_VARIANTS = {"console": INIT, "minram-pmsg": MINRAM_INIT}
+
 
 class ArchiveError(ValueError):
     pass
@@ -128,9 +176,11 @@ def validate_manifest(manifest: dict, data: bytes) -> None:
         raise ArchiveError("Manifest lacks required applets: " + ", ".join(sorted(REQUIRED_APPLETS - set(applets))))
 
 
-def entries(busybox: bytes) -> list[tuple[str, int, bytes, tuple[int, int]]]:
+def entries(busybox: bytes, variant: str = "console") -> list[tuple[str, int, bytes, tuple[int, int]]]:
+    if variant not in INIT_VARIANTS:
+        raise ArchiveError("Unknown init variant: " + variant)
     items = [(name, stat.S_IFDIR | 0o755, b"", (0, 0)) for name in ("bin", "dev", "proc", "run", "sys")]
-    items += [("init", stat.S_IFREG | 0o755, INIT, (0, 0)),
+    items += [("init", stat.S_IFREG | 0o755, INIT_VARIANTS[variant], (0, 0)),
               ("bin/busybox", stat.S_IFREG | 0o755, busybox, (0, 0))]
     items += [("bin/" + applet, stat.S_IFLNK | 0o777, b"busybox", (0, 0)) for applet in sorted(REQUIRED_APPLETS)]
     items += [("dev/console", stat.S_IFCHR | 0o600, b"", (5, 1)),
@@ -196,10 +246,10 @@ def parse_newc(data: bytes) -> list[tuple[str, int, bytes, tuple[int, int]]]:
         found.append((name, mode, payload, (rmaj, rmin)))
 
 
-def build(busybox: bytes, manifest: dict) -> bytes:
+def build(busybox: bytes, manifest: dict, variant: str = "console") -> bytes:
     validate_busybox_elf(busybox)
     validate_manifest(manifest, busybox)
-    expected = entries(busybox)
+    expected = entries(busybox, variant)
     raw = newc_archive(expected)
     if parse_newc(raw) != expected:
         raise ArchiveError("Internal newc verification failed")
@@ -221,6 +271,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Offline gzip/newc RAM diagnostic only; not hardware-validated, not a boot image, and no bootability claim.")
     parser.add_argument("--busybox", type=Path, required=True, help="Trusted static ELF64 LE AArch64 ET_EXEC BusyBox (no PT_DYNAMIC/PT_INTERP)")
     parser.add_argument("--manifest", type=Path, required=True, help='Trusted build manifest: {"schema":1,"sha256":"...","applets":["sh","mount",...]}')
+    parser.add_argument("--variant", choices=tuple(INIT_VARIANTS), default="console")
     parser.add_argument("--out", type=Path, required=True, help="New output .cpio.gz file; never overwrites")
     args = parser.parse_args(argv)
     try:
@@ -228,11 +279,11 @@ def main(argv=None) -> int:
             raise ArchiveError("BusyBox input exceeds size limit")
         binary = args.busybox.read_bytes()
         manifest = json.loads(args.manifest.read_text(encoding="utf-8-sig"))
-        archive = build(binary, manifest)
+        archive = build(binary, manifest, args.variant)
         write_new(args.out, archive)
         print(json.dumps({"output": str(args.out.resolve()), "bytes": len(archive),
                           "sha256": hashlib.sha256(archive).hexdigest(), "hardware_validated": False,
-                          "boot_image": False}, ensure_ascii=False))
+                          "boot_image": False, "variant": args.variant}, ensure_ascii=False))
     except (ArchiveError, OSError, json.JSONDecodeError) as exc:
         parser.exit(1, f"error: {exc}\n")
     return 0

@@ -60,6 +60,8 @@ PHY 初始化错误、按成功引用退出；没有实现厂商板级状态机�
 [BOOT-EVIDENCE.zh-CN.md](BOOT-EVIDENCE.zh-CN.md)。
 UART 尚无已验证的电脑接收路径。实验配置加入 pstore/ramoops 作为另一候选
 日志能力，但跨重启保留、原厂系统读取和用户态日志接入均未验证。
+独立 `diagnostic-minram-pmsg.cpio.gz` 候选补入 devtmpfs 挂载和用户态阶段标记，
+仅供最小 RAM 内核后续集成；尚未在手机执行或验证保留效果。
 
 ## GitHub Actions 做什么
 

@@ -1,12 +1,14 @@
 import gzip
 import hashlib
+import os
 from pathlib import Path
 import stat
 import struct
+import subprocess
 import tempfile
 import unittest
 
-from diagnostic_initramfs import (ArchiveError, INIT, REQUIRED_APPLETS, build, entries,
+from diagnostic_initramfs import (ArchiveError, INIT, MINRAM_INIT, REQUIRED_APPLETS, build, entries,
                                  newc_archive, parse_newc, validate_busybox_elf,
                                  validate_manifest, write_new)
 
@@ -25,6 +27,55 @@ def manifest_for(binary):
 
 
 class DiagnosticArchiveTests(unittest.TestCase):
+    def test_separate_pmsg_archive_and_invalid_variant(self):
+        binary = elf_fixture()
+        console = build(binary, manifest_for(binary))
+        candidate = build(binary, manifest_for(binary), "minram-pmsg")
+        self.assertNotEqual(console, candidate)
+        recovered = parse_newc(gzip.decompress(candidate))
+        self.assertEqual({name: data for name, _, data, _ in recovered}["init"], MINRAM_INIT)
+        self.assertEqual({name for name, _, _, _ in recovered if name.startswith("dev/")},
+                         {"dev/console", "dev/null"})
+        with self.assertRaises(ArchiveError):
+            build(binary, manifest_for(binary), "unknown")
+
+    @unittest.skipUnless(os.name == "posix", "requires POSIX shell and pseudo-terminal")
+    def test_pmsg_record_function_writes_marker_without_running_init(self):
+        import pty
+        import select
+        import tty
+        master, slave = pty.openpty()
+        try:
+            tty.setraw(slave)
+            function = MINRAM_INIT.decode().split("pmsg_record() {", 1)[1].split("\n}\n", 1)[0]
+            script = 'pmsg_sink=$1\npmsg_record() {' + function + '\n}\npmsg_record "test-marker"\n'
+            result = subprocess.run(["/bin/sh", "-c", script, "record-test", os.ttyname(slave)],
+                                    capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, b"")
+            self.assertTrue(select.select([master], [], [], 2)[0])
+            self.assertEqual(os.read(master, 1024), b"TYH212U-MINRAM-v1 test-marker\n")
+        finally:
+            os.close(master)
+            os.close(slave)
+
+    @unittest.skipUnless(os.name == "posix", "requires POSIX shell and /dev/full")
+    def test_pmsg_missing_node_and_write_failure_report_failure(self):
+        function = MINRAM_INIT.decode().split("pmsg_record() {", 1)[1].split("\n}\n", 1)[0]
+        script = 'pmsg_sink=$1\npmsg_record() {' + function + '\n}\npmsg_record "test-marker"\n'
+        with tempfile.TemporaryDirectory() as directory:
+            regular = Path(directory) / "regular"
+            regular.write_bytes(b"unchanged")
+            for sink, message in ((str(regular), b"PMSG unavailable"),
+                                  (str(Path(directory) / "missing"), b"PMSG unavailable"),
+                                  ("/dev/full", b"PMSG write failed")):
+                with self.subTest(sink=sink):
+                    result = subprocess.run(["/bin/sh", "-c", script, "record-test", sink],
+                                            capture_output=True, timeout=10)
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(message, result.stdout)
+            self.assertEqual(regular.read_bytes(), b"unchanged")
+
     def test_structural_static_aarch64_accepted(self):
         self.assertEqual(validate_busybox_elf(elf_fixture())["architecture"], "aarch64")
 

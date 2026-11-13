@@ -14,6 +14,12 @@ on:
       - 'devices/tyh212u/**'
       - 'tools/build-release.py'
   workflow_dispatch:
+    inputs:
+      scope:
+        description: Components to validate (reuse unchanged kernel artifacts)
+        type: choice
+        default: all
+        options: [all, diagnostics]
 
 permissions:
   contents: read
@@ -43,6 +49,7 @@ jobs:
         run: python3 -m unittest discover -s devices/tyh212u/tools -p 'test_*.py' -v
 
   kernel-compile:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'all'
     name: Compile experimental TYH212U ${{ matrix.variant }} kernel
     needs: tests
     runs-on: ubuntu-24.04
@@ -167,6 +174,8 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
           ## TYH212U diagnostic components only
           Built a static AArch64 BusyBox and a gzip/newc RAM diagnostic archive.
+          Also built a separate minram PMSG candidate that mounts devtmpfs and writes reserved-RAM markers.
+          PMSG retention and recovery on this phone remain unvalidated; the console-only archive is unchanged.
           QEMU runs applet smoke checks and parses the archive's init with sh -n; it never executes init.
           No target kernel, boot.img, OpenWrt firmware, AVB signature, phone boot or hardware validation.
           Do not flash these artifacts.
@@ -191,6 +200,7 @@ jobs:
           retention-days: 14
 
   kernel-audit:
+    if: github.event_name != 'workflow_dispatch' || inputs.scope == 'all'
     name: Audit pinned donor source (no kernel build)
     needs: tests
     runs-on: ubuntu-24.04
