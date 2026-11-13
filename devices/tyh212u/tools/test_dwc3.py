@@ -181,6 +181,11 @@ class Dwc3PreparationTests(unittest.TestCase):
                 (self.core_prepared, SOURCE_MANIFEST['legacy_phy_init_function']['prepared_sha256'])):
             function = driver.phy_init_function(source).group()
             self.assertEqual(hashlib.sha256(function).hexdigest(), expected)
+        unchanged_exit = re.search(
+            rb'(?m)^static void dwc3_phy_exit\(struct dwc3 \*dwc\)\n\{[\s\S]*?^}\n',
+            BASELINE_CORE).group()
+        self.assertEqual(hashlib.sha256(unchanged_exit).hexdigest(),
+                         SOURCE_MANIFEST['legacy_phy_exit_function_sha256'])
 
     def test_manifest_paths_and_output_summary_cannot_be_redirected(self):
         manifest = json.loads(self.manifest.read_text())

@@ -25,5 +25,6 @@
   "prepared_files": {
     "drivers/usb/dwc3/dwc3-of-simple.c": "8269386ebecc67de56c133b7356654e1107b3fac6d4777feaa071dd8a356717a",
     "drivers/usb/dwc3/core.c": "882e16651786c90f709c1c29f6e758569e29530480c8db4329bd6088e2642cf0"
-  }
+  },
+  "legacy_phy_exit_function_sha256": "c32c5e19b0c30285de871f5c694142301d854160aea662c1c3ade3f7cf0e857e"
 }
