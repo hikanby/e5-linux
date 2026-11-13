@@ -1,6 +1,6 @@
 # 天翼一号 2022 / TYH212U / ARES
 
-这是面向原生 OpenWrt 移植的独立准备目录，目前仍处于设备调查和诊断组件阶段。
+这是面向原生 OpenWrt 移植的独立准备目录，目前推进到实验平台内核编译阶段。
 **没有可刷入固件，没有验证过的替换内核，也尚未在手机上启动 OpenWrt。**
 
 本适配以用户 Fork 的 `main` 提交
@@ -32,7 +32,12 @@ IMEI、MAC、NV 或厂商固件。
 UFS 原厂节点使用 `sprd,ufshc` 和打包的 `syscon-names`/`syscons`，没有标准
 `resets` 属性；其时钟、校准 cell 与 `vdd-mphy` 名称和已有 QogirN6Pro 驱动相符。
 公共 UFS 驱动现可解析这两种 syscon/reset 表达方式，`prepare-ufs.py` 是该组件的
-固定基线入口。它尚未在 TYH212U 内核树编译或启动，复位寄存器行为也仍待本机验证。
+固定基线入口。独立 ARM64 UFS 对象已通过云编译；复位寄存器行为仍待本机验证。
+
+`prepare-kernel.py` 仅接入已核对来源和原厂绑定的 UMS9620 时钟、QogirN6Pro
+引脚、UFS 以及 IPA 电源域。复用 `devices/m8/port/` 中固定摘要的 SoC 源文件，
+不执行 M8 整机准备脚本，不导入其他机型的 DT 或充电策略。GPU 的两个时钟
+provider 尚缺；USB PHY、角色切换与充电策略尚未接入。
 
 ## GitHub Actions 做什么
 
@@ -48,26 +53,28 @@ UFS 原厂节点使用 `sprd,ufshc` 和打包的 `syscon-names`/`syscons`，没�
 3. 检出固定 Linux 源码提交
    `020b970e351eee3887e6caaf2d653926e7086e44`，审计受审目录中的精确字段与配置符号。
    这是源码覆盖检查，不编译目标内核，不证明硬件可用。
-4. 在同一固定提交上接入公共 QogirN6Pro UFS 驱动，检查最终配置符号为模块，
-   交叉编译 ARM64 UFS host 目录并确认目标 `.o` 存在。它只检查 C 编译，不做模块
-   完整链接，也不生成 TYH212U 的 Image、DTB 或 boot 镜像。
+4. 在同一固定提交上执行本目录的实验平台准备入口，通过受控构建器生成最小
+   ARM64 `Image`，完成全部选中模块的链接，并逐项检查配置、平台对象、模块和
+   摘要。没有构建本机 DTB、boot 镜像或 OpenWrt 固件，也不证明硬件可工作。
 
 工作流仅有 `contents: read` 权限，不需要用户密钥，不创建 Release、标签或部署。
 它不连接手机。构建日志、产物摘要、BusyBox 对应源码及许可证会随 artifact 保存。
 失败目录保留用于排查，不自动清理源码、对象或下载缓存。
 
 在 Fork 的 **Actions** 中打开该名称的运行记录查看进度。成功后可下载
-`tyh212u-ram-diagnostics-*` 和 `tyh212u-source-audit-*`，但不能刷入这些文件。
+`tyh212u-ram-diagnostics-*`、`tyh212u-source-audit-*` 和
+`tyh212u-experimental-platform-kernel-*`，但不能刷入这些文件。
 新工作流若尚未出现在默认分支的手动运行列表，先使用本分支的 push 触发；
 不要为了显示 Run workflow 而覆盖 main。详细构建入口见
 [DIAGNOSTICS-BUILD.zh-CN.md](DIAGNOSTICS-BUILD.zh-CN.md)。
+实验内核的固定输入、构建入口和产物说明见
+[KERNEL-BUILD.zh-CN.md](KERNEL-BUILD.zh-CN.md)。
 
 ## 后续尚需完成
 
-- 确认 ums9620 / QogirN6Pro 的时钟、中断、pinctrl、USB、供电和依赖，
-  形成完整 TYH212U 专用配置与准备脚本；不套用其他机型的整套硬件补丁。
-- 在 GitHub Actions 上编译 UFS 适配与完整内核，核对模块、原厂 DT 和 initramfs 依赖。
-- 编译实际匹配的 Image / 完整模块，检查内核与原厂 DT、内存布局的兼容条件。
+- 完成 USB PHY、角色切换、充电和供电策略的原厂证据核对与独立适配。
+- 将实验平台配置补齐为可供本机启动的配置，核对原厂 DT、IRQ、定时器、
+  保留内存、启动状态和 initramfs 依赖；实验内核通过编译不代表这些条件已满足。
 - 单独解决 boot v2 集成、AVB 接受条件和可验证的恢复方式，才考虑受控的设备启动实验。
 - 再接入 OpenWrt rootfs、网络、Wi-Fi、蜂窝、显示、触摸、充电等硬件，并逐项验证。
 

@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/kanoqwq/mu300-linux",
+  "commit": "23361cea515950e19abd02f1816142c324d3e03d",
+  "input_root": "devices/m8/port",
+  "source_scope": "Three checksum-pinned UMS9620 SoC source files only; no M8 board preparation or device tree is imported",
+  "files": {
+    "drivers/clk/sprd/ums9620-clk.c": "6e3cc04b0d68920b9e84343aa7ca79f6c7f62869572ee1f81bf303acf983ecdc",
+    "include/dt-bindings/clock/sprd,ums9620-clk.h": "754e2398f8d9bf7604ea0ad5d2cf3526e5ca7661e51d4a257251f04311bf67b0",
+    "include/dt-bindings/reset/sprd,ums9620-reset.h": "4ac68c3919a86c7e935f34bd2e36d485323fef62de4b224c34075d4a9ca9178c"
+  },
+  "prepared_files": {
+    "drivers/clk/sprd/ums9620-clk.c": "8143891dc28db8887e333f0e999f073a18356abaa56a59c461e968e56526562d",
+    "include/dt-bindings/clock/sprd,ums9620-clk.h": "754e2398f8d9bf7604ea0ad5d2cf3526e5ca7661e51d4a257251f04311bf67b0",
+    "include/dt-bindings/reset/sprd,ums9620-reset.h": "4ac68c3919a86c7e935f34bd2e36d485323fef62de4b224c34075d4a9ca9178c"
+  },
+  "adaptations": [
+    "Use the fixed baseline's frequency-table PLL API",
+    "Translate vendor composite divider register-minus-four to signed offset minus-four",
+    "Use regular composite operations for the donor's zero-offset SC composite clocks",
+    "Initialize the baseline reset controller's spinlock",
+    "Mark seven AI bus child gates as non-AON, respecting their existing ai-eb parent"
+  ],
+  "stock_binding_review": {
+    "evidence": "Sanitized review of the owner's read-only stock-live DT; raw DT and device identifiers stay local",
+    "ums9620_provider_count": 31,
+    "candidate_provider_match_count": 29,
+    "referenced_distinct_clock_ids": 178,
+    "unsupported_provider_compatibles": [
+      "sprd,ums9620-gpuapb-gate",
+      "sprd,ums9620-gpu-clk"
+    ],
+    "unsupported_active_reference": "GPU consumer uses sprd,ums9620-gpu-clk ID 0",
+    "ufs_clock_ids": [
+      {
+        "provider": "sprd,ums9620-apahb-gate",
+        "id": 5,
+        "candidate_symbol": "ufs_eb"
+      },
+      {
+        "provider": "sprd,ums9620-apahb-gate",
+        "id": 22,
+        "candidate_symbol": "ufs_cfg_eb"
+      },
+      {
+        "provider": "sprd,ums9620-aonapb-clk",
+        "id": 51,
+        "candidate_symbol": "ufs_aon"
+      },
+      {
+        "provider": "sprd,ums9620-g5l-pll",
+        "id": 12,
+        "candidate_symbol": "tgpll_256m"
+      }
+    ],
+    "hardware_validated": false
+  }
+}

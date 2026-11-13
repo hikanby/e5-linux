@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/kanoqwq/mu300-linux",
+  "revision": "23361cea515950e19abd02f1816142c324d3e03d",
+  "upstream_path": "upstream/port/drivers/pmdomain/sprd/ums9620-ipa-sys.c",
+  "source_path": "devices/m8/port/drivers/pmdomain/sprd/ums9620-ipa-sys.c",
+  "source_sha256": "ee71fdf1513a472119eb96592d5ccf5995347dc1091b771b1c7014200dbedeb9",
+  "prepared_sha256": "7296ddd331c61461d96865beee4e905dbdc9492c9912a131477e3f9d932fef6e",
+  "provenance": "Existing checksum-pinned M8 import is a source container; usb.py adapts its IPA domain to TYH212U packed syscon binding and preserves deferred probe. No M8/F50/U30 PHY or charge/role policy is imported.",
+  "target": "drivers/pmdomain/sprd/ums9620-ipa-sys.c",
+  "compatible": "sprd,qogirn6pro-ipa-sys-power-domain",
+  "scope": "Compile candidate based on matching stock DT resource names; no TYH212U power transition, USB or hardware validation"
+}

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "source_repository": "https://github.com/realme-kernel-opensource/realme_C51_C53_Narzo-N53-AndroidT-kernel-source",
+  "source_revision": "4381465ccaf87fcf3215b9cd42f4a685df40e5e0",
+  "source_path": "drivers/pinctrl/sprd/pinctrl-sprd-qogirn6pro.c",
+  "source_sha256": "0b45a6c2ac3dede193f524957b669757719e2a44beba87540c46eee4fdd37db4",
+  "repository_cache": "devices/m8/port/drivers/pinctrl/sprd/pinctrl-sprd-qogirn6pro.c",
+  "kernel_revision": "020b970e351eee3887e6caaf2d653926e7086e44",
+  "kernel_api_files": {
+    "drivers/pinctrl/sprd/pinctrl-sprd.c": "dfc73418617389e5271a66c70a806b27764a4089a673da81604184ddd52a98cb",
+    "drivers/pinctrl/sprd/pinctrl-sprd.h": "6eb7d946da998ea6efb04254b7f82f620a02e42d3590653cb4734fa477ed067b"
+  },
+  "adapted_sha256": "60b4602b4e04ae21aee4273c64957c7468eb445fb1598294c1e271a43011d4e4",
+  "adaptations": [
+    "Use the pinned kernel's existing sprd_pinctrl_core_probe_ext API with common offset 0x44, misc offset 0x444 and Qogir pull encoding",
+    "Use a distinct sprd-qogirn6pro-pinctrl platform driver name so other SoC drivers can register independently",
+    "Preserve the upstream pin table; do not import U30 Air I2C6 pad fixups or other board policy"
+  ],
+  "observed_binding": {
+    "compatible": "sprd,qogirn6pro-pinctrl",
+    "register_offset": "0x002e0000",
+    "register_bytes": "0x00010000",
+    "state_count": 32,
+    "unique_referenced_pin_names": 7,
+    "referenced_pin_names_present_in_source": true,
+    "state_encoding": "pins string and sprd,control cell",
+    "evidence": "Sanitized observations of the owner's original Android DT; no original DT or private identifiers included"
+  },
+  "compiled": false,
+  "hardware_validated": false
+}

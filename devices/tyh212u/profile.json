@@ -103,7 +103,7 @@
     "repository": "https://github.com/Enceka/linux-lts-e5",
     "revision": "020b970e351eee3887e6caaf2d653926e7086e44",
     "version": "6.18.54",
-    "role": "Pinned donor for source coverage auditing and isolated UFS object compilation; board adaptation and matching Image/modules have not been built"
+    "role": "Pinned baseline for source auditing and experimental platform Image/module compilation; board boot configuration and hardware support remain incomplete"
   },
   "status": {
     "bootable": false,
@@ -115,5 +115,6 @@
     "installation_supported": false,
     "updates_supported": false
   },
-  "ci_scope": "Offline boot-v2/initramfs tooling, static AArch64 BusyBox diagnostic archive build, textual source coverage and isolated ARM64 UFS object compilation; no target kernel Image or full module build, phone connection, flashing, signing or board support claim"
+  "status_interpretation": "target_kernel_built means a complete board-targeted kernel, not a successful minimal experimental platform compile. Per-run compile results are recorded in BUILD-RESULT.json artifacts.",
+  "ci_scope": "Offline tooling, AArch64 diagnostic archive, source coverage and experimental ARM64 platform Image plus all selected linked modules. No board DTB, boot image, OpenWrt firmware, phone connection, flashing, signing or hardware validation. USB PHY, charge/role policy and GPU clocks are not adapted."
 }
