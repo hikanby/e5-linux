@@ -29,13 +29,18 @@ IMEI、MAC、NV 或厂商固件。
 已有 root 不等于 bootloader 会接受修改镜像。原厂属性与命令行的锁状态证据存在
 冲突，不能据此声称启动链已开放。设备恢复路径尚未验证。
 
-## 首轮 GitHub Actions 做什么
+UFS 原厂节点使用 `sprd,ufshc` 和打包的 `syscon-names`/`syscons`，没有标准
+`resets` 属性；其时钟、校准 cell 与 `vdd-mphy` 名称和已有 QogirN6Pro 驱动相符。
+公共 UFS 驱动现可解析这两种 syscon/reset 表达方式，`prepare-ufs.py` 是该组件的
+固定基线入口。它尚未在 TYH212U 内核树编译或启动，复位寄存器行为也仍待本机验证。
+
+## GitHub Actions 做什么
 
 工作流为 `.github/workflows/tyh212u-diagnostics.yml`，名称
 **TYH212U diagnostic foundation**。分支首次推送会触发它，前提是 Fork 已启用 Actions。
 首次无需运行上游的 **Build and publish OpenWrt**；该发布流程不能代替本机型适配。
 
-首轮分为三项：
+当前分为四项：
 
 1. 在 Ubuntu 24.04 上运行 boot-v2、initramfs、源码审计和受控构建入口的离线测试。
 2. 从官方 SHA-256 固定的 BusyBox 1.37.0 源码交叉编译静态 AArch64 程序，生成
@@ -43,6 +48,9 @@ IMEI、MAC、NV 或厂商固件。
 3. 检出固定 Linux 源码提交
    `020b970e351eee3887e6caaf2d653926e7086e44`，审计受审目录中的精确字段与配置符号。
    这是源码覆盖检查，不编译目标内核，不证明硬件可用。
+4. 在同一固定提交上接入公共 QogirN6Pro UFS 驱动，检查最终配置符号为模块，
+   交叉编译 ARM64 UFS host 目录并确认目标 `.o` 存在。它只检查 C 编译，不做模块
+   完整链接，也不生成 TYH212U 的 Image、DTB 或 boot 镜像。
 
 工作流仅有 `contents: read` 权限，不需要用户密钥，不创建 Release、标签或部署。
 它不连接手机。构建日志、产物摘要、BusyBox 对应源码及许可证会随 artifact 保存。
@@ -56,8 +64,9 @@ IMEI、MAC、NV 或厂商固件。
 
 ## 后续尚需完成
 
-- 确认 ums9620 / QogirN6Pro 的时钟、中断、pinctrl、UFS、USB、供电和依赖，
-  形成 TYH212U 专用 DTS / 配置与准备脚本；不套用其他机型的整套硬件补丁。
+- 确认 ums9620 / QogirN6Pro 的时钟、中断、pinctrl、USB、供电和依赖，
+  形成完整 TYH212U 专用配置与准备脚本；不套用其他机型的整套硬件补丁。
+- 在 GitHub Actions 上编译 UFS 适配与完整内核，核对模块、原厂 DT 和 initramfs 依赖。
 - 编译实际匹配的 Image / 完整模块，检查内核与原厂 DT、内存布局的兼容条件。
 - 单独解决 boot v2 集成、AVB 接受条件和可验证的恢复方式，才考虑受控的设备启动实验。
 - 再接入 OpenWrt rootfs、网络、Wi-Fi、蜂窝、显示、触摸、充电等硬件，并逐项验证。

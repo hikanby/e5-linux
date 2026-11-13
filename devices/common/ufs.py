@@ -1,4 +1,4 @@
-"""UMS9620 sprd,ufshc binding. Only explicit UFS profiles call this port."""
+"""UMS9620 sprd,ufshc driver for direct and indexed syscon bindings."""
 import hashlib
 import json
 from pathlib import Path

@@ -86,6 +86,21 @@ static int ufs_efuse_calib_data(struct platform_device *pdev,
 	return 0;
 }
 
+static int ufs_sprd_set_reset(struct reset_control *reset,
+			      const struct syscon_ufs *syscon, bool asserted)
+{
+	if (reset)
+		return asserted ? reset_control_assert(reset) :
+			reset_control_deassert(reset);
+
+	if (!syscon->regmap || !syscon->mask)
+		return -EINVAL;
+
+	/* Match SPRD reset semantics: set the mask to assert, clear to release. */
+	return regmap_update_bits(syscon->regmap, syscon->reg, syscon->mask,
+			  asserted ? syscon->mask : 0);
+}
+
 static int ufs_sprd_reset(struct ufs_sprd_host *host)
 {
 	int ret;
@@ -101,14 +116,16 @@ static int ufs_sprd_reset(struct ufs_sprd_host *host)
 			   host->phy_sram_bypass.mask,
 			   host->phy_sram_bypass.mask);
 
-	ret = reset_control_assert(host->aon_apb_ufs_rst);
+	ret = ufs_sprd_set_reset(host->aon_apb_ufs_rst,
+				 &host->aon_apb_ufs_rst_syscon, true);
 	if (ret) {
 		dev_err(host->hba->dev, "%s assert ufsdev_soft_rst failed, ret = %d!\n",
 				__func__, ret);
 		goto out;
 	}
 
-	ret = reset_control_assert(host->ap_ahb_ufs_rst);
+	ret = ufs_sprd_set_reset(host->ap_ahb_ufs_rst,
+				 &host->ap_ahb_ufs_rst_syscon, true);
 	if (ret) {
 		dev_err(host->hba->dev, "%s assert ufs_soft_rst failed, ret = %d!\n",
 				__func__, ret);
@@ -117,14 +134,16 @@ static int ufs_sprd_reset(struct ufs_sprd_host *host)
 
 	usleep_range(1000, 1100);
 
-	ret = reset_control_deassert(host->aon_apb_ufs_rst);
+	ret = ufs_sprd_set_reset(host->aon_apb_ufs_rst,
+				 &host->aon_apb_ufs_rst_syscon, false);
 	if (ret) {
 		dev_err(host->hba->dev, "%s deassert ufsdev_soft_rst failed, ret = %d!\n",
 				__func__, ret);
 		goto out;
 	}
 
-	ret = reset_control_deassert(host->ap_ahb_ufs_rst);
+	ret = ufs_sprd_set_reset(host->ap_ahb_ufs_rst,
+				 &host->ap_ahb_ufs_rst_syscon, false);
 	if (ret) {
 		dev_err(host->hba->dev, "%s deassert ufs_soft_rst failed, ret = %d!\n",
 				__func__, ret);
@@ -139,7 +158,35 @@ static int ufs_sprd_get_syscon_reg(struct device_node *np,
 				   struct syscon_ufs *reg, const char *name)
 {
 	struct regmap *regmap;
+	struct of_phandle_args args;
 	u32 syscon_args[2];
+	int index;
+	int ret;
+
+	if (of_find_property(np, "syscon-names", NULL)) {
+		index = of_property_match_string(np, "syscon-names", name);
+		if (index < 0) {
+			if (of_find_property(np, "syscons", NULL))
+				return index;
+		} else {
+			ret = of_parse_phandle_with_args(np, "syscons",
+							 "#syscon-cells", index, &args);
+			if (ret)
+				return ret;
+			if (args.args_count != ARRAY_SIZE(syscon_args)) {
+				of_node_put(args.np);
+				return -EINVAL;
+			}
+			regmap = syscon_node_to_regmap(args.np);
+			of_node_put(args.np);
+			if (IS_ERR(regmap))
+				return PTR_ERR(regmap);
+			reg->regmap = regmap;
+			reg->reg = args.args[0];
+			reg->mask = args.args[1];
+			return 0;
+		}
+	}
 
 	regmap = syscon_regmap_lookup_by_phandle_args(np, name, 2, syscon_args);
 	if (IS_ERR(regmap)) {
@@ -295,20 +342,33 @@ static int ufs_sprd_init(struct ufs_hba *hba)
 			 host->rco_100M = NULL;
 	}
 
-	host->aon_apb_ufs_rst = devm_reset_control_get(dev, "ufsdev_soft_rst");
-	if (IS_ERR(host->aon_apb_ufs_rst)) {
-		dev_err(dev, "%s get ufsdev_soft_rst failed, err%ld\n",
-			__func__, PTR_ERR(host->aon_apb_ufs_rst));
-		host->aon_apb_ufs_rst = NULL;
-		return -ENODEV;
-	}
+	if (of_find_property(dev->of_node, "resets", NULL)) {
+		host->aon_apb_ufs_rst = devm_reset_control_get(dev, "ufsdev_soft_rst");
+		if (IS_ERR(host->aon_apb_ufs_rst)) {
+			dev_err(dev, "%s get ufsdev_soft_rst failed, err%ld\n",
+				__func__, PTR_ERR(host->aon_apb_ufs_rst));
+			host->aon_apb_ufs_rst = NULL;
+			return -ENODEV;
+		}
 
-	host->ap_ahb_ufs_rst = devm_reset_control_get(dev, "ufs_soft_rst");
-	if (IS_ERR(host->ap_ahb_ufs_rst)) {
-		dev_err(dev, "%s get ufs_soft_rst failed, err%ld\n",
-			__func__, PTR_ERR(host->ap_ahb_ufs_rst));
-		host->ap_ahb_ufs_rst = NULL;
-		return -ENODEV;
+		host->ap_ahb_ufs_rst = devm_reset_control_get(dev, "ufs_soft_rst");
+		if (IS_ERR(host->ap_ahb_ufs_rst)) {
+			dev_err(dev, "%s get ufs_soft_rst failed, err%ld\n",
+				__func__, PTR_ERR(host->ap_ahb_ufs_rst));
+			host->ap_ahb_ufs_rst = NULL;
+			return -ENODEV;
+		}
+	} else {
+		ret = ufs_sprd_get_syscon_reg(dev->of_node,
+					     &host->aon_apb_ufs_rst_syscon,
+					     "aon_apb_ufs_rst");
+		if (ret)
+			return ret;
+		ret = ufs_sprd_get_syscon_reg(dev->of_node,
+					     &host->ap_ahb_ufs_rst_syscon,
+					     "ap_ahb_ufs_rst");
+		if (ret)
+			return ret;
 	}
 
 

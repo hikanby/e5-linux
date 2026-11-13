@@ -6,3 +6,6 @@ devices/m8/port/** -text -whitespace
 installer/** text=auto eol=lf
 installer/ui/src-tauri/icons/*.ico binary
 installer/screenshots/*.png binary
+
+# UFS checksums must use the same LF bytes on Windows and Linux.
+devices/common/ufs/** text eol=lf

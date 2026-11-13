@@ -36,7 +36,37 @@
     "storage": {
       "type": "UFS",
       "enabled_dt_compatible": "sprd,ufshc",
-      "stock_kconfig": "SCSI_UFS_SPRD_QOGIRN6PRO"
+      "stock_kconfig": "SCSI_UFS_SPRD_QOGIRN6PRO",
+      "device_tree_binding": {
+        "syscon_style": "indexed_syscon_names_and_syscons",
+        "syscon_specifier_cells": 2,
+        "standard_resets_present": false,
+        "syscon_names": [
+          "ap_ahb_ufs_rst",
+          "aon_apb_ufs_rst",
+          "phy_sram_ext_ld_done",
+          "phy_sram_bypass",
+          "phy_sram_init_done",
+          "aon_apb_ufs_clk_en",
+          "ufsdev_refclk_en",
+          "usb31pllv_ref2mphy_en"
+        ],
+        "clock_names": [
+          "ufs_eb",
+          "ufs_cfg_eb",
+          "ufs_hclk",
+          "ufs_hclk_source",
+          "ufs_rco_100M"
+        ],
+        "nvmem_cell_names": [
+          "ufs_cali_lane1",
+          "ufs_cali_lane0"
+        ],
+        "supplies": [
+          "vdd-mphy-supply",
+          "vcc-supply"
+        ]
+      }
     },
     "pmic_dt_compatibles": ["sprd,ump9620", "sprd,ump9621", "sprd,ump9622"],
     "wifi": {
@@ -73,7 +103,7 @@
     "repository": "https://github.com/Enceka/linux-lts-e5",
     "revision": "020b970e351eee3887e6caaf2d653926e7086e44",
     "version": "6.18.54",
-    "role": "Pinned donor for source coverage auditing; board adaptation and matching Image/modules have not been built"
+    "role": "Pinned donor for source coverage auditing and isolated UFS object compilation; board adaptation and matching Image/modules have not been built"
   },
   "status": {
     "bootable": false,
@@ -85,5 +115,5 @@
     "installation_supported": false,
     "updates_supported": false
   },
-  "ci_scope": "Offline boot-v2/initramfs tooling, static AArch64 BusyBox diagnostic archive build and textual source coverage only; no target kernel build, phone connection, flashing, signing or board support claim"
+  "ci_scope": "Offline boot-v2/initramfs tooling, static AArch64 BusyBox diagnostic archive build, textual source coverage and isolated ARM64 UFS object compilation; no target kernel Image or full module build, phone connection, flashing, signing or board support claim"
 }

@@ -35,6 +35,8 @@ struct ufs_sprd_host {
 	struct syscon_ufs aon_apb_ufs_clk_en;
 	struct syscon_ufs ufsdev_refclk_en;
 	struct syscon_ufs usb31pllv_ref2mphy_en;
+	struct syscon_ufs ap_ahb_ufs_rst_syscon;
+	struct syscon_ufs aon_apb_ufs_rst_syscon;
 
 	struct clk *hclk_source;
 	struct clk *rco_100M;

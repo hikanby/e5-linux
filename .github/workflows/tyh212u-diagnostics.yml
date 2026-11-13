@@ -5,7 +5,10 @@ on:
   push:
     branches: ['feat/tyh212u-cloud']
     paths:
+      - '.gitattributes'
       - '.github/workflows/tyh212u-diagnostics.yml'
+      - 'devices/common/ufs.py'
+      - 'devices/common/ufs/**'
       - 'devices/tyh212u/**'
       - 'tools/build-release.py'
   workflow_dispatch:
@@ -36,6 +39,64 @@ jobs:
           persist-credentials: false
       - name: Test TYH212U tools and command-only wrapper
         run: python3 -m unittest discover -s devices/tyh212u/tools -p 'test_*.py' -v
+
+  ufs-compile:
+    name: Compile QogirN6Pro UFS driver only
+    needs: tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: Enceka/linux-lts-e5
+          ref: 020b970e351eee3887e6caaf2d653926e7086e44
+          path: ci/tyh212u-linux
+          submodules: recursive
+          persist-credentials: false
+      - name: Install kernel cross-build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bc bison flex libssl-dev libelf-dev dwarves \
+            gcc-aarch64-linux-gnu
+      - name: Apply the pinned TYH212U UFS source
+        run: python3 devices/tyh212u/prepare-ufs.py "$GITHUB_WORKSPACE/ci/tyh212u-linux"
+      - name: Compile the UFS host directory for ARM64
+        run: |
+          set -euo pipefail
+          kernel="$GITHUB_WORKSPACE/ci/tyh212u-linux"
+          output="$RUNNER_TEMP/tyh212u-ufs-build"
+          make -C "$kernel" O="$output" ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          "$kernel/scripts/config" --file "$output/.config" \
+            --enable MODULES \
+            --enable ARCH_SPRD \
+            --enable SCSI \
+            --enable SCSI_UFSHCD \
+            --enable SCSI_UFSHCD_PLATFORM \
+            --enable OF \
+            --enable NVMEM \
+            --enable RESET_CONTROLLER \
+            --module SCSI_UFS_SPRD_QOGIRN6PRO
+          make -C "$kernel" O="$output" ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          grep -Fx 'CONFIG_SCSI_UFS_SPRD_QOGIRN6PRO=m' "$output/.config"
+          make -C "$kernel" O="$output" ARCH=arm64 \
+            CROSS_COMPILE=aarch64-linux-gnu- -j2 drivers/ufs/host/
+          test -s "$output/drivers/ufs/host/ufs-sprd-qogirn6pro.o"
+          sha256sum "$output/drivers/ufs/host/ufs-sprd-qogirn6pro.o"
+      - name: State compile boundary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## UFS driver compile check only
+          Compiled the QogirN6Pro UFS driver against the pinned Linux 6.18.54 ARM64 headers.
+          This did not build a TYH212U kernel Image, DTB, initramfs, Android boot image or OpenWrt firmware.
+          No phone, boot chain, AVB or hardware behavior was tested.
+          SUMMARY
 
   diagnostics:
     name: Build AArch64 RAM diagnostics (not firmware)
