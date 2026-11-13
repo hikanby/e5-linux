@@ -2,13 +2,15 @@
 
 记录日期：2026-11-14。当前结论服务于实验内核的编译准备，尚未验证
 替换内核中的 USB 枚举、Type-C 角色、普通充电、快充或 OTG。
-本次分析未连接手机，也未发布原始 DT、固件或设备标识。
+原厂当前连接状态采用经授权的只读采集；原始报告留在机主本地，
+此文档仅记录脱敏结论，未发布原始 DT、固件或设备标识。
 
 ## 证据来源和适用范围
 
 | 来源 | 固定版本 | 可支持的结论 |
 | --- | --- | --- |
 | 本机原厂 DT 的选定脱敏属性 | [usb-stock-bindings.json](usb-stock-bindings.json) | 本机节点、属性和引用关系；不能证明当前驱动绑定、物理器件装配或运行时行为 |
+| 本机原厂当前 USB 运行状态 | [usb-stock-runtime.json](usb-stock-runtime.json)，2026-11-14 经授权的只读采集；原始报告仅留本地 | 当前连接场景的驱动、UDC、gadget 绑定及 runtime 状态；不代表所有角色或替换内核结果 |
 | Realme AndroidT 供应商参考树 | `realme-kernel-opensource/realme_C51_C53_Narzo-N53-AndroidT-kernel-source`，`4381465ccaf87fcf3215b9cd42f4a685df40e5e0` | 相似平台的参考实现；不是 TYH212U Android 原厂源码 |
 | 实验内核基线 | `Enceka/linux-lts-e5`，`020b970e351eee3887e6caaf2d653926e7086e44`，Linux 6.18.54 | 本次实际准备目标中的接口、匹配和角色处理路径 |
 | M8 缓存 PHY | [port/usb-phy-sources.json](port/usb-phy-sources.json) 中的固定来源及原始文件摘要 | 借鉴的代码输入及附加策略；不能代表本机原厂策略 |
@@ -43,11 +45,30 @@ Realme 参考入口：
 
 完整的脱敏引用关系及尚缺项目保存在 `usb-stock-bindings.json`。
 
+## 原厂当前连接状态（2026-11-14）
+
+本次只读采集得到以下脱敏运行证据：
+
+| 对象 | 当前观察 |
+| --- | --- |
+| IPA DWC3 UDC `25100000.dwc3` | 驱动为 `dwc3`，状态 `configured`，当前速度 `high-speed` |
+| DWC3 父 glue | 驱动为 `dwc3-sprd`，runtime 状态 `active` |
+| Android gadget `android-config` | 绑定到 `25100000.dwc3` |
+| AON MUSB UDC `musb-hdrc.2.auto` | 状态 `not attached`，速度 `UNKNOWN` |
+| MUSB glue | 驱动为 `musb-sprd`，runtime 状态 `suspended` |
+
+这些记录确认原厂 Android 在本次连接场景使用 IPA DWC3 承担已配置的
+USB gadget 数据通道，AON MUSB 当时未连接。`high-speed` 是本次链路速度，
+不能据此判断硬件最高速率。此快照补充了 DT 不能提供的当前运行状态，
+仍未证明全部 Type-C 角色、OTG、PD/快充切换或控制器 mux 操作与互斥顺序，
+也不是替换内核的启动、枚举或供电验证。
+
 ## 双控制器与 mux 边界
 
 原厂 DT 同时启用 AON MUSB 与 IPA DWC3，不能仅凭节点状态确定物理 USB
-mux 选择、实际驱动绑定或活动 UDC。需要本机运行时绑定和原厂控制器切换
-证据，再决定应适配哪条调试通道，不能把强制选择 IPA 当作已核对的板级策略。
+mux 选择、实际驱动绑定或活动 UDC。上述运行快照已确认当前连接的 DWC3
+绑定与活动状态；不同场景的控制器选择和切换顺序仍缺原厂证据，不能把
+强制选择 IPA 当作已核对的完整板级策略。
 
 M8 缓存 PHY 在 probe 和 init 都包含选择 IPA_SYS 控制器的寄存器写入。
 当前 `usb-phy.py` 删除了 probe 中的独立写入，但仍保留 init 序列中的
@@ -156,10 +177,11 @@ BC1.2 分类、boost regulator 或 Type-C 协调。
 
 固定基线 `core.c` 的 `dwc3_phy_init()` 在 836–837 行先后调用
 `usb_phy_init(dwc->usb2_phy)`、`usb_phy_init(dwc->usb3_phy)`，没有检查
-这两次 legacy PHY 返回值。因此当前 PHY callback 会返回寄存器错误或
-超时，不等于 DWC3 会中止 probe。本机两个 legacy PHY 引用还指向同一个
-对象，硬件实验前须适配 core 的错误处理，并核对部分初始化失败、两个
-引用及 shutdown/unwind 的配对语义。当前编译准备未修改该 core 行为。
+这两次 legacy PHY 返回值。[dwc3.py](dwc3.py) 现检查两次返回值：第一次失败
+直接返回，第二次失败仅关闭已成功初始化的 USB2 引用；generic PHY 失败仍保留
+原有清理顺序。每个 legacy 引用保留原先一次 init/shutdown 调用，两个引用指向
+同一个对象时也不改变调用次数，由本实验 SSPHY 的幂等 callback 处理重复调用。
+生成函数的故障注入核对失败返回和调用配对；这不证明完整的寄存器恢复。
 
 PHY 失败路径的 `sprd_ssphy_power_off()` 只关闭其实现中列明的部分状态，
 不恢复 init 改动的全部时钟或控制器 mux，也没有证明可以恢复原厂其他
@@ -169,14 +191,14 @@ consumer 的 supply 引用平衡，不能称为完整硬件回滚，更不能替
 
 ## 进入硬件验证前还缺什么
 
-1. 确认本机 AON MUSB/IPA DWC3 的实际驱动、活动 UDC、mux 选择和
-   控制器互斥时序，再确定最小调试通道。
+1. 以当前原厂 DWC3 gadget 运行证据为起点，补齐不同连接和角色下的
+   AON MUSB/IPA DWC3 选择、mux 操作及控制器互斥顺序，再确定最小调试通道。
 2. 找到本机 `cm_otg_vbus` 的注册者、实际 boost 驱动和失败回退路径。
 3. 依据本机驱动绑定及原厂观察，确认 DPDM、BC1.2、PD/快充各自的
    所有者、PMIC 实例和互斥顺序。
 4. 取得 UMP9620 EIC 的适配证据，核对 Type-C/PD、充电器、PHY 与
    控制器在基线中的绑定和依赖条件，不能只增加 compatible。
-5. 适配 legacy PHY 初始化失败的 core 处理、同 PHY 两引用的 unwind，
+5. 在本机验证 legacy PHY 初始化失败的 core 处理、同 PHY 两引用的 unwind，
    并根据已确认的寄存器所有权补齐失败恢复。
 6. 再确定设备模式调试通道所需的供电和角色实现，记录原厂与
    替换内核在插拔、枚举、普通充电及 OTG 切换时的可对照证据。

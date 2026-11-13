@@ -42,10 +42,10 @@ BOUNDARY = {
     'usb_phy_and_board_policy_adapted': False,
     'usb_phy_driver_compiled': True,
     'usb_board_role_policy_adapted': False,
-    'active_stock_usb_controller_confirmed': False,
+    'stock_current_device_mode_dwc3_binding_observed': True,
     'usb_controller_mux_hardware_validated': False,
     'pmic_eic_binding_adapted': False,
-    'dwc3_legacy_phy_init_error_handling_adapted': False,
+    'dwc3_legacy_phy_init_error_handling_adapted': True,
     'pmic_vbus_event_chain_hardware_validated': False,
     'instructions': 'Do not flash. This is not a boot image or an installable OpenWrt release.',
 }

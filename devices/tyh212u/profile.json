@@ -97,6 +97,14 @@
     "display": {
       "android_bound_driver": "sprd-mipi-panel-drv",
       "exact_panel_model": null
+    },
+    "usb_current_stock_connection": {
+      "date": "2026-11-14",
+      "evidence_file": "usb-stock-runtime.json",
+      "gadget_bound_udc": "25100000.dwc3",
+      "udc_state": "configured",
+      "current_speed": "high-speed",
+      "all_role_and_mux_sequences_validated": false
     }
   },
   "kernel_baseline": {
@@ -124,5 +132,5 @@
     "experimental_kernel_booted": false,
     "recovery_procedure_and_result_validated": false
   },
-  "ci_scope": "Offline tooling, AArch64 diagnostic archive, source coverage and experimental ARM64 platform Image plus all selected linked modules, including isolated USB PHY, generic DWC3 compatible glue and gadget NCM/ACM compilation. No board DTB, boot image, OpenWrt firmware, phone connection, flashing, signing or hardware validation. Stock DT enables both IPA DWC3 and AON MUSB; active controller and mux are unconfirmed. PMIC EIC binding, USB charge/role/DPDM policy and GPU clocks are not adapted."
+  "ci_scope": "Offline tooling, AArch64 diagnostic archive, source coverage and experimental ARM64 platform Image plus all selected linked modules, including isolated USB PHY, generic DWC3 compatible glue and gadget NCM/ACM compilation. CI does not build a board DTB, boot image or OpenWrt firmware, contact a phone, flash, sign or validate hardware. Separate stock Android observation confirms DWC3 for the current device-mode connection, but full mux and role policy remains unconfirmed. PMIC EIC binding, USB charge/role/DPDM policy and GPU clocks are not adapted."
 }

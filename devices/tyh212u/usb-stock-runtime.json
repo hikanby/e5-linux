@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "profile": "tyh212u",
+  "evidence": {
+    "date": "2026-11-14",
+    "kind": "selected_owner_authorized_stock_android_sysfs_and_configfs_reads",
+    "scope": "One existing Android USB connection to the owner's computer; no role switch, cable transition, gadget configuration or device write was performed",
+    "private_raw_report_included": false,
+    "replacement_kernel_hardware_validation": false
+  },
+  "current_device_connection": {
+    "gadget_bound_udc": "25100000.dwc3",
+    "udc_state": "configured",
+    "current_speed": "high-speed",
+    "core_driver": "dwc3",
+    "core_dt_path": "/soc/ipa-apb/usb3@25100000/dwc3@25100000",
+    "core_runtime_status": "active",
+    "parent_driver": "dwc3-sprd",
+    "parent_runtime_status": "active"
+  },
+  "other_registered_udc": {
+    "udc": "musb-hdrc.2.auto",
+    "driver": "musb-sprd",
+    "dt_path": "/soc/aon/usb@a00000",
+    "state": "not attached",
+    "current_speed": "UNKNOWN",
+    "runtime_status": "suspended"
+  },
+  "phy_bindings": [
+    {
+      "dt_path": "/soc/ipa-apb/ssphy@25310000",
+      "driver": "sprd-ssphy",
+      "runtime_status": "suspended"
+    },
+    {
+      "dt_path": "/soc/aon/hsphy@300000",
+      "driver": "sprd-hsphy",
+      "runtime_status": "unsupported"
+    }
+  ],
+  "interpretation": [
+    "DWC3 carries the current stock Android device-mode connection; this is stronger evidence than enabled DT nodes alone",
+    "Both UDCs are registered; the observation does not establish mux register values, boot ordering, OTG policy or all cable scenarios",
+    "Reported PHY runtime_status is not a direct measurement of its power rail or an error diagnosis",
+    "No conclusion about successful operation of the experimental Linux 6.18 kernel follows from these stock Android observations"
+  ]
+}

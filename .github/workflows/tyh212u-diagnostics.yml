@@ -83,7 +83,7 @@ jobs:
           Linked an ARM64 Image and every selected module against pinned Linux 6.18.54.
           Includes UMS9620 clocks, QogirN6Pro pinctrl/UFS, IPA and experimental USB components.
           USB PHY and generic DWC3 glue are compile checks; board USB/charging/Type-C policy is incomplete.
-          Stock DT enables DWC3 and MUSB; active controller/mux and PMIC EIC binding remain unconfirmed.
+          Stock Android uses DWC3 for the observed device-mode connection; full mux/role policy and PMIC EIC binding remain unadapted.
           GPU clock providers remain unadapted.
           No board DTB, Android boot image or OpenWrt firmware was built.
           No phone, boot chain, AVB or hardware behavior was tested. Do not flash.

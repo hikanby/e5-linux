@@ -1010,6 +1010,7 @@
     "both_ipa_dwc3_and_aon_musb_enabled_in_stock_dt": true,
     "both_paths_share_vbus_extcon_typec_extcon_and_vdd_supplies": true,
     "live_selected_controller_known_from_dt": false,
-    "interpretation": "Enabled nodes do not identify the physical USB mux selection or actually bound/active UDC. Probe-time forced mux changes would require separate original behavior evidence."
+    "separate_current_connection_runtime_evidence": "usb-stock-runtime.json",
+    "interpretation": "Enabled nodes alone do not identify the physical USB mux selection or active UDC. Separate stock runtime evidence confirms DWC3 for one device-mode connection, not complete mux ordering or role policy."
   }
 }

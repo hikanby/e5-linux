@@ -1,10 +1,29 @@
 {
-  "schema": 1,
+  "schema": 2,
   "repository": "https://github.com/Enceka/linux-lts-e5",
   "revision": "020b970e351eee3887e6caaf2d653926e7086e44",
-  "path": "drivers/usb/dwc3/dwc3-of-simple.c",
-  "baseline_sha256": "b251e769eab6a582b2876ae71231b6de5e3fbdb0962a2b4c572a968538a43a4d",
-  "prepared_sha256": "8269386ebecc67de56c133b7356654e1107b3fac6d4777feaa071dd8a356717a",
-  "adaptation": "Add only the stock parent compatible sprd,qogirn6pro-dwc3 to existing generic clock/reset glue; child is already snps,dwc3",
-  "boundary": "Compile-only. Does not implement the vendor dual-extcon, BC1.2 gating, charger-manager VBUS/boost or Type-C state machine. No board DT or boot image is supplied."
+  "files": {
+    "drivers/usb/dwc3/dwc3-of-simple.c": {
+      "baseline_sha256": "b251e769eab6a582b2876ae71231b6de5e3fbdb0962a2b4c572a968538a43a4d",
+      "prepared_sha256": "8269386ebecc67de56c133b7356654e1107b3fac6d4777feaa071dd8a356717a"
+    },
+    "drivers/usb/dwc3/core.c": {
+      "baseline_sha256": "ec13b3e657934287db4bd6789718d44517b4e82c2bb903c8f72f0b053e174643",
+      "prepared_sha256": "882e16651786c90f709c1c29f6e758569e29530480c8db4329bd6088e2642cf0"
+    }
+  },
+  "legacy_phy_init_function": {
+    "baseline_sha256": "4553985f85ee506602cef0cdeb26770277599b7ef034d33d11b6b1b33fc23fe1",
+    "prepared_sha256": "7d8ad9bf67b7799b8a95a02dc432540a0010f301b78211fd545264fcb3caa42e"
+  },
+  "adaptations": [
+    "Add the stock parent compatible sprd,qogirn6pro-dwc3 to existing generic clock/reset glue; child is already snps,dwc3",
+    "Propagate each legacy usb_phy_init failure; only shut down successfully initialized references and preserve generic PHY cleanup order",
+    "Preserve one init and shutdown per legacy reference, including two references to one object; shared PHY callback idempotence remains required and is implemented by the experimental UMS9620 SSPHY"
+  ],
+  "boundary": "Compile-only. Error propagation and callback pairing do not establish complete register rollback. Does not implement the vendor dual-extcon, BC1.2 gating, charger-manager VBUS/boost or Type-C state machine. No board DT or boot image is supplied.",
+  "prepared_files": {
+    "drivers/usb/dwc3/dwc3-of-simple.c": "8269386ebecc67de56c133b7356654e1107b3fac6d4777feaa071dd8a356717a",
+    "drivers/usb/dwc3/core.c": "882e16651786c90f709c1c29f6e758569e29530480c8db4329bd6088e2642cf0"
+  }
 }

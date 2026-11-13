@@ -39,12 +39,16 @@ UFS 原厂节点使用 `sprd,ufshc` 和打包的 `syscon-names`/`syscons`，没�
 引脚、UFS、IPA 电源域及实验 USB 组件。复用 `devices/m8/port/` 中固定摘要的 SoC 源文件，
 不执行 M8 整机准备脚本，不导入其他机型的 DT 或充电策略。GPU 的两个时钟
 provider 尚缺。USB PHY 作为独立模块编译；已移除参考机型的 PMIC DPDM 写入、
-全局 PMIC 查找和 extcon 改写。DWC3 仅补充父节点 compatible。
+全局 PMIC 查找和 extcon 改写。DWC3 补充父节点 compatible，并检查 legacy
+PHY 初始化错误、按成功引用退出；没有实现厂商板级状态机。
 原厂双 extcon、BC1.2、OTG 供电和角色状态机尚未实现，不能据此启动 USB。
-原厂 DT 同时启用 IPA DWC3 和 AON MUSB，后者为 peripheral；实际控制器绑定
-与 mux 选择仍未知。实验 PHY 的 init 仍有未经本机验证的 IPA mux 序列，
+原厂 DT 同时启用 IPA DWC3 和 AON MUSB，后者为 peripheral。2026-11-14
+只读观察确认当前 Android 到电脑的连接绑定 `25100000.dwc3`，已 configured，
+速率为 high-speed；MUSB 已注册但 not attached。完整 mux 选择顺序仍未知。
+实验 PHY 的 init 仍有未经本机验证的 IPA mux 序列，
 且 PMIC EIC 的原厂 compatible 与基线驱动不匹配，不能直接加载测试 USB。
-本机脱敏接线见 `usb-stock-bindings.json`，来源对照与限制见
+本机脱敏接线见 `usb-stock-bindings.json`，单次原厂运行观察见
+`usb-stock-runtime.json`，来源对照与限制见
 [USB-POLICY-EVIDENCE.zh-CN.md](USB-POLICY-EVIDENCE.zh-CN.md)。
 
 ## GitHub Actions 做什么

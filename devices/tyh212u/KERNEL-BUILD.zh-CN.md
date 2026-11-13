@@ -35,11 +35,13 @@ USB PHY、DWC3、VBUS GPIO extcon 和 configfs 的 NCM/ACM 功能以模块参与
 链接检查。NCM/ACM 是后续调试通道的编译准备，没有配置或连接 USB gadget。
 PHY 保留本机 DT 的 extcon，且不写 PMIC DPDM 选择位；完整供电/角色协调仍缺失。
 通用 DWC3 glue compatible 只提供时钟、复位和子节点创建，不补齐厂商状态机。
-原厂 DT 同时启用 IPA DWC3 与 AON MUSB，实际绑定和 mux 选择尚未确认。
+原厂 DT 同时启用 IPA DWC3 与 AON MUSB；`usb-stock-runtime.json` 确认当前
+Android 设备模式连接使用 DWC3，完整 mux 选择顺序仍未确认。
 PHY init 保留的 IPA mux 序列未经本机验证；PMIC EIC compatible 也缺可靠适配。
 这些组件的编译不能作为选择实际控制器或加载驱动的依据。
-基线 DWC3 还忽略 legacy PHY init 的返回值；PHY 回调返回失败不保证控制器
-停止初始化。故障注入测试仅核对回调错误与 regulator 引用，不证明完整硬件回滚。
+DWC3 准备器还检查两次 legacy PHY init 返回值；失败时仅关闭已成功初始化的
+引用，保留每个引用原有的调用次数。同对象双引用依赖 PHY callback 的幂等处理。
+故障注入仅核对错误、调用配对和 regulator 引用，不证明完整硬件回滚。
 
 ## 产物与对应源码
 
