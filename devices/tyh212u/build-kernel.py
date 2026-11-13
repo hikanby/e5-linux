@@ -29,6 +29,11 @@ REQUIRED_OBJECTS = (
     'drivers/usb/dwc3/dwc3.o',
     'drivers/usb/dwc3/dwc3-of-simple.o',
     'drivers/extcon/extcon-usb-gpio.o',
+    'fs/pstore/inode.o',
+    'fs/pstore/platform.o',
+    'fs/pstore/pmsg.o',
+    'fs/pstore/ram.o',
+    'fs/pstore/ram_core.o',
 )
 BOUNDARY = {
     'artifact_kind': 'experimental-platform-kernel-compile-only',
@@ -47,6 +52,9 @@ BOUNDARY = {
     'pmic_eic_binding_adapted': False,
     'dwc3_legacy_phy_init_error_handling_adapted': True,
     'pmic_vbus_event_chain_hardware_validated': False,
+    'pstore_ram_components_compiled': True,
+    'pstore_log_recovery_hardware_validated': False,
+    'diagnostic_output_channel_validated': False,
     'instructions': 'Do not flash. This is not a boot image or an installable OpenWrt release.',
 }
 

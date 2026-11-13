@@ -85,6 +85,7 @@ jobs:
           USB PHY and generic DWC3 glue are compile checks; board USB/charging/Type-C policy is incomplete.
           Stock Android uses DWC3 for the observed device-mode connection; full mux/role policy and PMIC EIC binding remain unadapted.
           GPU clock providers remain unadapted.
+          Built-in pstore/ramoops components are compile checks; log retention and recovery on this phone remain unvalidated.
           No board DTB, Android boot image or OpenWrt firmware was built.
           No phone, boot chain, AVB or hardware behavior was tested. Do not flash.
           SUMMARY

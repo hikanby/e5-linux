@@ -51,6 +51,12 @@ PHY 初始化错误、按成功引用退出；没有实现厂商板级状态机�
 `usb-stock-runtime.json`，来源对照与限制见
 [USB-POLICY-EVIDENCE.zh-CN.md](USB-POLICY-EVIDENCE.zh-CN.md)。
 
+核心启动的离线核对已找到 CPU/PSCI、GICv3、ARMv8 timer 和 UART fallback
+的固定源码匹配，相关配置已启用。原厂静态 DT 与实际运行 DT 的内存和保留区
+存在差异；实验 Image 的 text_offset 也不同于原厂，实际加载和跳转规则仍未知。
+UART 尚无已验证的电脑接收路径。实验配置加入 pstore/ramoops 作为另一候选
+日志能力，但跨重启保留、原厂系统读取和用户态日志接入均未验证。
+
 ## GitHub Actions 做什么
 
 工作流为 `.github/workflows/tyh212u-diagnostics.yml`，名称

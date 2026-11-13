@@ -43,6 +43,14 @@ DWC3 准备器还检查两次 legacy PHY init 返回值；失败时仅关闭已�
 引用，保留每个引用原有的调用次数。同对象双引用依赖 PHY callback 的幂等处理。
 故障注入仅核对错误、调用配对和 regulator 引用，不证明完整硬件回滚。
 
+原厂 DT 声明了 ramoops 保留区，实验配置据此加入内置 pstore/ramoops、
+kernel console、PMSG 和 zlib 压缩的编译检查，并登记五个内置成员对象的摘要。
+未启用 pstore 的块设备后端，没有设置新内存地址或改动原厂保留区。
+这只是候选日志能力：尚未验证新内核的 DT 绑定、跨重启内存保留、原厂 Android
+读取兼容性或实际日志回收，不能据此认定已有可用调试通道。
+pstore console 记录内核 printk；诊断 `/init` 写入 `/dev/console` 的用户态内容
+不会因此自动进入该记录，PMSG 尚未接入诊断 init。
+
 ## 产物与对应源码
 
 成功 artifact 包含 `Image`、完整配置、System.map、Module.symvers、模块清单、
