@@ -73,6 +73,10 @@ jobs:
               --kernel "$GITHUB_WORKSPACE/ci/tyh212u-linux" \
               --workspace "$RUNNER_TEMP/tyh212u-workspace" \
               --out "$GITHUB_WORKSPACE/out/tyh212u-platform-kernel" --jobs 4
+      - name: Inspect TYH212U entry layout without generating a component
+        run: |
+          python3 devices/tyh212u/tools/image_entry.py inspect \
+            out/tyh212u-platform-kernel/Image
       - name: Verify experimental kernel checksums
         working-directory: out/tyh212u-platform-kernel
         run: sha256sum --check SHA256SUMS
@@ -86,6 +90,7 @@ jobs:
           Stock Android uses DWC3 for the observed device-mode connection; full mux/role policy and PMIC EIC binding remain unadapted.
           GPU clock providers remain unadapted.
           Built-in pstore/ramoops components are compile checks; log retention and recovery on this phone remain unvalidated.
+          Checked the stock-loader entry layout against this Image without generating a wrapped component.
           No board DTB, Android boot image or OpenWrt firmware was built.
           No phone, boot chain, AVB or hardware behavior was tested. Do not flash.
           SUMMARY
