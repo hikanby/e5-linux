@@ -1,4 +1,4 @@
-# TYH212U 实验平台内核编译
+# TYH212U 实验内核编译
 
 此入口检查平台驱动与 Linux 6.18.54 的编译和链接条件，产物不能刷入。
 没有本机 DTB、boot 容器、OpenWrt rootfs、AVB 签名或安装器。
@@ -31,6 +31,24 @@ python3 tools/build-release.py run --command-only \
 内核版本、必要平台对象及 `modules.order` 中每个对象的完整 `.ko`。
 编译前后核对源码差异摘要，防止构建中输入变化。
 
+## 独立最小 RAM 编译配置
+
+`--variant minram` 使用 `kernel-minram.config`、
+`<workspace>/objects/tyh212u-minram` 和版本 `6.18.54-tyh212u-minram`。
+默认 `--variant platform` 保留上述平台构建行为。两种配置均由 Actions 在独立
+runner 检出同一固定源码，经同一受锁入口构建，不复用另一配置的对象。
+
+RAM 配置只执行 `make Image`，禁用可加载模块、块存储、UFS、SPI/ADI、PMIC、
+regulator、NVMEM、GPIO、USB、网络与设备电源管理。保留 ARM64/PSCI、中断、
+timer、UART、必要时钟和 pinctrl、外部 gzip initramfs、内存文件系统及
+pstore/ramoops。ARM64 强制启用 SMP，NR_CPUS 保留为 8；未应用启动 CPU 限制，
+不能将此配置称为已验证的单核启动。隐藏选中的电源框架不等同于具体硬件驱动。
+
+devtmpfs 能力保留，但不依赖自动挂载；当前诊断 init 尚未显式挂载 devtmpfs
+或接通 PMSG。没有嵌入 initramfs、生成 DTB、改动 bootargs 或构造 boot 容器。
+时钟 provider 初始化仍可能修改硬件，unused 时钟处理和启动器 watchdog 交接
+仍需审阅。因此该配置仅是一次独立编译检查，不能据此进行试启动。
+
 USB PHY、DWC3、VBUS GPIO extcon 和 configfs 的 NCM/ACM 功能以模块参与
 链接检查。NCM/ACM 是后续调试通道的编译准备，没有配置或连接 USB gadget。
 PHY 保留本机 DT 的 extcon，且不写 PMIC DPDM 选择位；完整供电/角色协调仍缺失。
@@ -53,15 +71,20 @@ pstore console 记录内核 printk；诊断 `/init` 写入 `/dev/console` 的用
 
 ## 产物与对应源码
 
-成功 artifact 包含 `Image`、完整配置、System.map、Module.symvers、模块清单、
+平台配置成功 artifact 包含 `Image`、完整配置、System.map、Module.symvers、模块清单、
 `modules.tar.gz`、`BUILD-RESULT.json`、`ARTIFACT-BOUNDARY.json` 和
 `SHA256SUMS`。模块属于同次编译，归档保留安装目录层次，但未运行 depmod，
 也未验证能在手机加载。`modules.order` 保留 Linux 6.18 的构建树 `.o` 格式。
+
+RAM 配置的 artifact 包含 `Image`、完整配置、System.map、kernel.release、
+对应源码 overlay、COPYING、构建结果与边界、摘要清单，不生成模块档案。
+结果中的 `build_variant` 和 `kernel_seed_sha256` 绑定选定配置；必要对象摘要
+覆盖 UART、GICv3、timer、时钟、pinctrl 和 pstore 五个成员。
 
 `prepared-source-overlay.tar.gz` 保存所有修改与新增源码。其基线仓库、精确
 提交、每个差异文件摘要、编译器版本及本适配仓库提交均在结果中登记。
 在同一基线的全新目录应用该 overlay，可得到本次准备的源码；不要覆盖已有
 准备树。随附基线 COPYING。seed 配置和构建器由结果中的 adapter commit 对应。
 
-实验内核的成功结果只证明该配置的编译和链接通过。后续还须完成原厂 DT、
-USB/供电策略、启动链和恢复条件，再考虑经过授权的设备启动实验。
+实验内核的成功结果只证明该配置的编译和链接通过。首次诊断启动还须完成本机
+DT、日志回收、启动链和恢复条件；USB/供电与完整 OpenWrt 功能另需逐项适配。

@@ -25,6 +25,31 @@ class KernelBuildValidationTests(unittest.TestCase):
                 builder.verify_config(seed, actual)
         with self.assertRaisesRegex(ValueError, 'Duplicate'):
             builder.verify_config(seed, seed + 'CONFIG_BLOCK=n\n')
+        with self.assertRaisesRegex(ValueError, 'dropped required settings'):
+            builder.verify_config('CONFIG_BLOCK=n\n', 'CONFIG_BLOCK=y\n')
+
+    def test_build_variants_keep_seeds_and_object_directories_separate(self):
+        platform = builder.build_spec('platform')
+        minram = builder.build_spec('minram')
+        self.assertNotEqual(platform['seed'], minram['seed'])
+        self.assertNotEqual(platform['objects'], minram['objects'])
+        self.assertNotEqual(platform['release'], minram['release'])
+        self.assertTrue(platform['modules'])
+        self.assertFalse(minram['modules'])
+        self.assertNotEqual(platform['boundary']['artifact_kind'],
+                            minram['boundary']['artifact_kind'])
+        with self.assertRaisesRegex(ValueError, 'Unknown'):
+            builder.build_spec('../platform')
+
+    def test_minram_rejects_unexpected_probe_support_even_if_seed_omits_it(self):
+        builder.verify_build_config('CONFIG_PRINTK=y\n', 'CONFIG_PRINTK=y\n', 'minram')
+        for name in builder.MINRAM_FORBIDDEN_CONFIG:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, 'excluded support'):
+                    builder.verify_build_config('CONFIG_PRINTK=y\n',
+                                                'CONFIG_PRINTK=y\nCONFIG_' + name + '=y\n',
+                                                'minram')
+        builder.verify_build_config('CONFIG_BLOCK=y\n', 'CONFIG_BLOCK=y\n', 'platform')
 
     def test_modules_order_requires_complete_linked_cohort(self):
         with tempfile.TemporaryDirectory() as directory:

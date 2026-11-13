@@ -67,7 +67,7 @@ UART 尚无已验证的电脑接收路径。实验配置加入 pstore/ramoops �
 **TYH212U diagnostic foundation**。分支首次推送会触发它，前提是 Fork 已启用 Actions。
 首次无需运行上游的 **Build and publish OpenWrt**；该发布流程不能代替本机型适配。
 
-当前分为四项：
+当前分为四类任务，其中内核任务按配置各编译一次：
 
 1. 在 Ubuntu 24.04 上运行 boot-v2、initramfs、源码审计和受控构建入口的离线测试。
 2. 从官方 SHA-256 固定的 BusyBox 1.37.0 源码交叉编译静态 AArch64 程序，生成
@@ -75,9 +75,11 @@ UART 尚无已验证的电脑接收路径。实验配置加入 pstore/ramoops �
 3. 检出固定 Linux 源码提交
    `020b970e351eee3887e6caaf2d653926e7086e44`，审计受审目录中的精确字段与配置符号。
    这是源码覆盖检查，不编译目标内核，不证明硬件可用。
-4. 在同一固定提交上执行本目录的实验平台准备入口，通过受控构建器生成最小
-   ARM64 `Image`，完成全部选中模块的链接，并逐项检查配置、平台对象、模块和
-   摘要。独立入口工具同时检查该 Image 的候选放置跨度，不生成包装组件。
+4. 在同一固定提交上执行本目录的实验平台准备入口，分别生成平台编译配置和
+   最小 RAM 诊断配置的 ARM64 `Image`。平台配置完成全部选中模块的链接；RAM
+   配置禁用模块、存储、PMIC、regulator、USB 和网络，保留核心启动与日志能力。
+   两者使用独立对象和产物目录，逐项检查配置、必要对象和摘要。独立入口工具
+   同时检查每份 Image 的候选放置跨度，不生成包装组件。
    没有构建本机 DTB、boot 镜像或 OpenWrt 固件，也不证明硬件可工作。
 
 工作流仅有 `contents: read` 权限，不需要用户密钥，不创建 Release、标签或部署。
@@ -86,7 +88,8 @@ UART 尚无已验证的电脑接收路径。实验配置加入 pstore/ramoops �
 
 在 Fork 的 **Actions** 中打开该名称的运行记录查看进度。成功后可下载
 `tyh212u-ram-diagnostics-*`、`tyh212u-source-audit-*` 和
-`tyh212u-experimental-platform-kernel-*`，但不能刷入这些文件。
+`tyh212u-experimental-platform-kernel-*`、`tyh212u-experimental-minram-kernel-*`，
+但不能刷入这些文件。
 新工作流若尚未出现在默认分支的手动运行列表，先使用本分支的 push 触发；
 不要为了显示 Run workflow 而覆盖 main。详细构建入口见
 [DIAGNOSTICS-BUILD.zh-CN.md](DIAGNOSTICS-BUILD.zh-CN.md)。

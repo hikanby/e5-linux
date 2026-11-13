@@ -57,6 +57,57 @@ BOUNDARY = {
     'diagnostic_output_channel_validated': False,
     'instructions': 'Do not flash. This is not a boot image or an installable OpenWrt release.',
 }
+MINRAM_REQUIRED_OBJECTS = (
+    'drivers/clk/sprd/ums9620-clk.o',
+    'drivers/pinctrl/sprd/pinctrl-sprd-qogirn6pro.o',
+    'drivers/tty/serial/sprd_serial.o',
+    'drivers/irqchip/irq-gic-v3.o',
+    'drivers/clocksource/arm_arch_timer.o',
+    'fs/pstore/inode.o',
+    'fs/pstore/platform.o',
+    'fs/pstore/pmsg.o',
+    'fs/pstore/ram.o',
+    'fs/pstore/ram_core.o',
+)
+MINRAM_BOUNDARY = {
+    'artifact_kind': 'experimental-minram-kernel-compile-only',
+    'kernel_image_built': True,
+    'modules_disabled': True,
+    'board_dtb_built': False,
+    'boot_image_built': False,
+    'openwrt_firmware_built': False,
+    'initramfs_embedded': False,
+    'phone_contacted': False,
+    'hardware_validated': False,
+    'diagnostic_output_channel_validated': False,
+    'pstore_log_recovery_hardware_validated': False,
+    'bootloader_watchdog_handoff_validated': False,
+    'clock_and_regulator_hardware_effects_validated': False,
+    'instructions': 'Do not flash. This is a compile check without a board DTB or boot container.',
+}
+MINRAM_FORBIDDEN_CONFIG = (
+    'MODULES', 'BLOCK', 'SCSI', 'SCSI_UFSHCD', 'SPI', 'MFD_SC27XX_PMIC',
+    'REGULATOR', 'NVMEM', 'GPIOLIB', 'NET', 'USB_SUPPORT', 'PM',
+    'CPU_IDLE', 'CPU_FREQ', 'HOTPLUG_CPU', 'WATCHDOG',
+)
+
+
+def build_spec(variant):
+    if variant == 'platform':
+        return {
+            'seed': HERE / 'kernel.config', 'objects': 'tyh212u-platform',
+            'release': '6.18.54-tyh212u-platform',
+            'required_objects': REQUIRED_OBJECTS, 'boundary': BOUNDARY,
+            'modules': True,
+        }
+    if variant == 'minram':
+        return {
+            'seed': HERE / 'kernel-minram.config', 'objects': 'tyh212u-minram',
+            'release': '6.18.54-tyh212u-minram',
+            'required_objects': MINRAM_REQUIRED_OBJECTS, 'boundary': MINRAM_BOUNDARY,
+            'modules': False,
+        }
+    raise ValueError('Unknown kernel build variant')
 
 
 def digest(path):
@@ -91,6 +142,17 @@ def verify_config(seed, resolved):
                   if actual.get(name, 'n') != value]
     if mismatches:
         raise ValueError('Kconfig dropped required settings: ' + ', '.join(mismatches))
+
+
+def verify_build_config(seed, resolved, variant):
+    build_spec(variant)
+    verify_config(seed, resolved)
+    if variant == 'minram':
+        actual = config_values(resolved)
+        enabled = [name for name in MINRAM_FORBIDDEN_CONFIG
+                   if actual.get(name, 'n') != 'n']
+        if enabled:
+            raise ValueError('RAM variant enabled excluded support: ' + ', '.join(enabled))
 
 
 def relative_file(root, name):
@@ -162,11 +224,12 @@ def owned(info):
     return info
 
 
-def perform_build(kernel, workspace, out, jobs):
+def perform_build(kernel, workspace, out, jobs, variant='platform'):
     if os.name == 'nt':
         raise ValueError('Use the Ubuntu GitHub Actions build environment')
     require_lock(workspace)
-    build = workspace / 'objects/tyh212u-platform'
+    spec = build_spec(variant)
+    build = workspace / 'objects' / spec['objects']
     for left, right in ((kernel, build), (kernel, out), (build, out)):
         if left == right or left.is_relative_to(right) or right.is_relative_to(left):
             raise ValueError('Source, objects and artifacts must be separate')
@@ -181,14 +244,15 @@ def perform_build(kernel, workspace, out, jobs):
     build.mkdir(parents=True)
     out.mkdir(parents=True)
     env = build_environment()
-    seed_path = HERE / 'kernel.config'
+    seed_path = spec['seed']
     seed = seed_path.read_text(encoding='utf-8')
     make = ['make', '-C', str(kernel), 'O=' + str(build), 'ARCH=arm64',
             'CROSS_COMPILE=' + PREFIX, 'HOSTCC=gcc']
     subprocess.run(make + ['KCONFIG_ALLCONFIG=' + str(seed_path), 'allnoconfig'],
                    env=env, check=True)
-    verify_config(seed, (build / '.config').read_text())
-    subprocess.run(make + ['-j' + str(jobs), 'Image', 'modules'], env=env, check=True)
+    verify_build_config(seed, (build / '.config').read_text(), variant)
+    targets = ['Image', 'modules'] if spec['modules'] else ['Image']
+    subprocess.run(make + ['-j' + str(jobs)] + targets, env=env, check=True)
     if changed_sources(kernel) != prepared:
         raise ValueError('Prepared kernel sources changed during compilation')
     image = relative_file(build, 'arch/arm64/boot/Image')
@@ -198,42 +262,48 @@ def perform_build(kernel, workspace, out, jobs):
     elf = relative_file(build, 'vmlinux').read_bytes()[:20]
     if elf[:6] != b'\x7fELF\x02\x01' or struct.unpack_from('<H', elf, 18)[0] != 183:
         raise ValueError('vmlinux is not little-endian ELF64 AArch64')
-    for name in REQUIRED_OBJECTS:
+    for name in spec['required_objects']:
         if relative_file(build, name).stat().st_size == 0:
-            raise ValueError('Empty required platform object: ' + name)
+            raise ValueError('Empty required kernel object: ' + name)
     release = relative_file(build, 'include/config/kernel.release').read_text().strip()
-    if release != '6.18.54-tyh212u-platform':
+    if release != spec['release']:
         raise ValueError('Unexpected kernel release: ' + release)
-    modules = selected_modules(build)
-    with tarfile.open(out / 'modules.tar.gz', 'x:gz') as archive:
-        for name, source in modules.items():
-            archive.add(source, arcname='lib/modules/' + release + '/kernel/' + name,
-                        recursive=False, filter=owned)
+    modules = selected_modules(build) if spec['modules'] else {}
+    if spec['modules']:
+        with tarfile.open(out / 'modules.tar.gz', 'x:gz') as archive:
+            for name, source in modules.items():
+                archive.add(source, arcname='lib/modules/' + release + '/kernel/' + name,
+                            recursive=False, filter=owned)
     with tarfile.open(out / 'prepared-source-overlay.tar.gz', 'x:gz') as archive:
         for name in prepared:
             archive.add(relative_file(kernel, name), arcname=name, recursive=False, filter=owned)
-    for name, target in (
+    copies = [
             ('arch/arm64/boot/Image', 'Image'), ('.config', 'config'),
-            ('System.map', 'System.map'), ('Module.symvers', 'Module.symvers'),
+            ('System.map', 'System.map'),
+            ('include/config/kernel.release', 'kernel.release'), ('../COPYING', 'COPYING')]
+    if spec['modules']:
+        copies.extend([
+            ('Module.symvers', 'Module.symvers'),
             ('modules.order', 'modules.order'), ('modules.builtin', 'modules.builtin'),
-            ('modules.builtin.modinfo', 'modules.builtin.modinfo'),
-            ('include/config/kernel.release', 'kernel.release'), ('../COPYING', 'COPYING')):
+            ('modules.builtin.modinfo', 'modules.builtin.modinfo')])
+    for name, target in copies:
         source = kernel / 'COPYING' if name == '../COPYING' else relative_file(build, name)
         shutil.copyfile(source, out / target)
     record = {
-        'profile': 'tyh212u', 'kernel_revision': REVISION, 'kernel_release': release,
+        'profile': 'tyh212u', 'build_variant': variant,
+        'kernel_revision': REVISION, 'kernel_release': release,
         'kernel_repository': 'https://github.com/Enceka/linux-lts-e5',
         'adapter_revision': git(REPO, 'rev-parse', 'HEAD').decode().strip(),
         'kernel_seed_sha256': digest(seed_path), 'prepared_source_sha256': prepared,
-        'required_objects_sha256': {name: digest(build / name) for name in REQUIRED_OBJECTS},
+        'required_objects_sha256': {name: digest(build / name) for name in spec['required_objects']},
         'module_sha256': {name: digest(path) for name, path in modules.items()},
         'compiler': subprocess.check_output([PREFIX + 'gcc', '--version'], env=env,
                                             text=True).splitlines()[0],
-        'boundary': BOUNDARY,
+        'boundary': spec['boundary'],
     }
     (out / 'BUILD-RESULT.json').write_text(json.dumps(record, indent=2) + '\n',
                                          encoding='utf-8', newline='\n')
-    (out / 'ARTIFACT-BOUNDARY.json').write_text(json.dumps(BOUNDARY, indent=2) + '\n',
+    (out / 'ARTIFACT-BOUNDARY.json').write_text(json.dumps(spec['boundary'], indent=2) + '\n',
                                               encoding='utf-8', newline='\n')
     names = sorted(path.name for path in out.iterdir())
     (out / 'SHA256SUMS').write_text(
@@ -247,8 +317,10 @@ def main():
     for name in ('kernel', 'workspace', 'out'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--jobs', type=int, default=2, choices=range(1, 9))
+    parser.add_argument('--variant', choices=('platform', 'minram'), default='platform')
     args = parser.parse_args()
-    perform_build(args.kernel.resolve(), args.workspace.resolve(), args.out.resolve(), args.jobs)
+    perform_build(args.kernel.resolve(), args.workspace.resolve(), args.out.resolve(),
+                  args.jobs, args.variant)
 
 
 if __name__ == '__main__':

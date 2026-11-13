@@ -43,10 +43,17 @@ jobs:
         run: python3 -m unittest discover -s devices/tyh212u/tools -p 'test_*.py' -v
 
   kernel-compile:
-    name: Compile experimental TYH212U platform kernel
+    name: Compile experimental TYH212U ${{ matrix.variant }} kernel
     needs: tests
     runs-on: ubuntu-24.04
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [platform, minram]
+    env:
+      KERNEL_VARIANT: ${{ matrix.variant }}
+      KERNEL_OUTPUT: out/tyh212u-${{ matrix.variant }}-kernel
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -65,22 +72,24 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential bc bison flex libssl-dev libelf-dev dwarves \
             gcc-aarch64-linux-gnu
-      - name: Compile Image and all selected modules through the build wrapper
+      - name: Compile the selected kernel variant through the build wrapper
         run: |
           python3 tools/build-release.py run --command-only \
-            --workspace "$RUNNER_TEMP/tyh212u-workspace" --label tyh212u-platform-kernel -- \
+            --workspace "$RUNNER_TEMP/tyh212u-workspace" --label "tyh212u-$KERNEL_VARIANT-kernel" -- \
             python3 devices/tyh212u/build-kernel.py \
               --kernel "$GITHUB_WORKSPACE/ci/tyh212u-linux" \
               --workspace "$RUNNER_TEMP/tyh212u-workspace" \
-              --out "$GITHUB_WORKSPACE/out/tyh212u-platform-kernel" --jobs 4
+              --variant "$KERNEL_VARIANT" \
+              --out "$GITHUB_WORKSPACE/$KERNEL_OUTPUT" --jobs 4
       - name: Inspect TYH212U entry layout without generating a component
         run: |
           python3 devices/tyh212u/tools/image_entry.py inspect \
-            out/tyh212u-platform-kernel/Image
+            "$KERNEL_OUTPUT/Image"
       - name: Verify experimental kernel checksums
-        working-directory: out/tyh212u-platform-kernel
+        working-directory: ${{ env.KERNEL_OUTPUT }}
         run: sha256sum --check SHA256SUMS
       - name: State compile boundary
+        if: matrix.variant == 'platform'
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
           ## Experimental platform kernel compile check
@@ -94,23 +103,35 @@ jobs:
           No board DTB, Android boot image or OpenWrt firmware was built.
           No phone, boot chain, AVB or hardware behavior was tested. Do not flash.
           SUMMARY
+      - name: State minimal RAM compile boundary
+        if: matrix.variant == 'minram'
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Experimental minimal RAM kernel compile check
+          Linked an ARM64 Image with UART, UMS9620 clocks, QogirN6Pro pinctrl and pstore/ramoops.
+          Resolved configuration rejects enabled storage, PMIC, regulator, USB, network or module support.
+          ARM64 keeps SMP enabled; no single-CPU runtime limit or boot arguments were applied.
+          Existing clock-provider initialization can still write hardware; watchdog handoff is unvalidated.
+          No initramfs was embedded and no board DTB, Android boot image or OpenWrt firmware was built.
+          Entry inspection checks geometry only. No phone or boot chain was tested. Do not flash.
+          SUMMARY
       - name: Upload experimental kernel and matching source overlay (do not flash)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: tyh212u-experimental-platform-kernel-${{ github.run_id }}-${{ github.run_attempt }}
-          path: out/tyh212u-platform-kernel/
+          name: tyh212u-experimental-${{ matrix.variant }}-kernel-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.KERNEL_OUTPUT }}/
           if-no-files-found: error
           retention-days: 14
       - name: Upload kernel task logs and resolved configuration
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: tyh212u-kernel-build-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          name: tyh212u-${{ matrix.variant }}-kernel-build-logs-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             out/build-logs/
             out/build-state/
-            ${{ runner.temp }}/tyh212u-workspace/objects/tyh212u-platform/.config
-            ${{ runner.temp }}/tyh212u-workspace/objects/tyh212u-platform/include/config/kernel.release
+            ${{ runner.temp }}/tyh212u-workspace/objects/tyh212u-${{ matrix.variant }}/.config
+            ${{ runner.temp }}/tyh212u-workspace/objects/tyh212u-${{ matrix.variant }}/include/config/kernel.release
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14
